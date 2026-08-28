@@ -28,10 +28,6 @@
         <button class="theme-toggle" id="themeToggle" aria-label="Switch to dark mode">
           <span class="theme-icon">☾</span>
         </button>
-        <button class="header-book-btn" id="headerBookBtn">
-          <span>Book Trip</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </button>
       </div>
     </div>
   </header>
@@ -51,7 +47,7 @@
               <!-- Scroll-controlled journey. No controls, no autoplay, no loop:
                    the only thing that ever moves this is scroll position. -->
               <video class="hero-video" id="heroVideo"
-                     src="video/travel1.mp4"
+                     src="video/travel-journey.mp4"
                      poster="images/local.jpg"
                      muted
                      playsinline
@@ -241,11 +237,6 @@
           <div class="field-label">Or describe it your way</div>
           <textarea class="plan-input" id="planInput" placeholder="I hate mornings, I don't do museums, and I need vegetarian food everywhere..."></textarea>
 
-          <div class="error-notice" id="planError" style="display: none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>Please pick at least one preference or write your trip style above.</span>
-          </div>
-
           <button class="btn-primary" id="genBtn">Generate itinerary →</button>
           <button class="btn-secondary" id="bookBtn">Book a trip →</button>
         </div>
@@ -253,10 +244,7 @@
 
       <!-- ===== BOOK STEP 1: Local vs International ===== -->
       <section class="screen" id="book1">
-        <button class="back-link" id="back1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Back</span>
-        </button>
+        <button class="back-link" id="back1">← Back</button>
         <h2 class="step-question">Where are you visiting?</h2>
         <div class="choice-grid">
           <div class="dest-card tall" data-next="local" id="choice-local">
@@ -274,20 +262,14 @@
 
       <!-- ===== BOOK STEP 2: Local Spots ===== -->
       <section class="screen" id="bookLocal">
-        <button class="back-link" id="backLocal">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Back</span>
-        </button>
+        <button class="back-link" id="backLocal">← Back</button>
         <h2 class="step-question">Popular spots near you</h2>
         <div class="dest-grid" id="localGrid"></div>
       </section>
 
       <!-- ===== BOOK STEP 2: International Destinations ===== -->
       <section class="screen" id="bookIntl">
-        <button class="back-link" id="backIntl">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Back</span>
-        </button>
+        <button class="back-link" id="backIntl">← Back</button>
         <h2 class="step-question">Popular international destinations</h2>
         <div class="dest-grid" id="intlGrid"></div>
       </section>
@@ -406,19 +388,6 @@
         <span class="mono">Prototype build</span>
       </div>
     </footer>
-  </div>
-
-  <!-- Organic Pulsing Blob Loader Overlay -->
-  <div class="blob-loader-overlay" id="blobLoader">
-    <div class="blob-loader-card">
-      <div class="organic-blob-container">
-        <div class="organic-pulse-blob">
-          <div class="organic-blob-core"></div>
-        </div>
-      </div>
-      <div class="blob-loader-title" id="blobLoadingTitle">Synthesizing Constraints…</div>
-      <div class="blob-loader-subtitle" id="blobLoadingSub">Balancing time windows, dietary filters, and safety data</div>
-    </div>
   </div>
 
   <!-- Toast notification -->

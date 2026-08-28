@@ -58,74 +58,32 @@
   });
 
   // ===========================================
-  // Chip Selection & Input Focus / Error Clearing
+  // Chip Selection
   // ===========================================
-
-  const planError = document.getElementById('planError');
-  const planInput = document.getElementById('planInput');
-
-  function clearErrorState() {
-    if (planError) planError.style.display = 'none';
-    if (planInput) planInput.classList.remove('has-error');
-  }
 
   document.querySelectorAll('.chip-row').forEach(row => {
     row.addEventListener('click', e => {
       if (e.target.classList.contains('chip')) {
         e.target.classList.toggle('selected');
-        clearErrorState();
       }
     });
   });
 
-  if (planInput) {
-    planInput.addEventListener('input', clearErrorState);
-    planInput.addEventListener('focus', clearErrorState);
-  }
-
   // ===========================================
-  // Generate Itinerary (Organic Blob Loader)
+  // Generate Itinerary (shimmer loading)
   // ===========================================
 
   const genBtn = document.getElementById('genBtn');
-  const blobLoader = document.getElementById('blobLoader');
-  const blobLoadingTitle = document.getElementById('blobLoadingTitle');
-  const blobLoadingSub = document.getElementById('blobLoadingSub');
-
   genBtn.addEventListener('click', () => {
-    const selectedChips = document.querySelectorAll('.chip.selected');
-    const inputText = planInput ? planInput.value.trim() : '';
+    genBtn.classList.add('loading');
+    genBtn.textContent = 'Building your itinerary…';
 
-    // Validation: require at least one input
-    if (selectedChips.length === 0 && inputText.length === 0) {
-      if (planInput) planInput.classList.add('has-error');
-      if (planError) planError.style.display = 'flex';
-      return;
-    }
-
-    clearErrorState();
-
-    // Show blob loader
-    if (blobLoader) {
-      blobLoader.classList.add('active');
-      if (blobLoadingTitle) blobLoadingTitle.textContent = 'Synthesizing Constraints…';
-      if (blobLoadingSub) blobLoadingSub.textContent = 'Balancing time windows, dietary filters, and safety data';
-
-      setTimeout(() => {
-        if (blobLoadingTitle) blobLoadingTitle.textContent = 'Checking Live Safety Grid…';
-        if (blobLoadingSub) blobLoadingSub.textContent = 'Verifying crowd levels and open-data feeds';
-      }, 1100);
-
-      setTimeout(() => {
-        blobLoader.classList.remove('active');
-        setNavActive('itinerary');
-        showScreen('itinerary');
-        showToast('✨', 'Itinerary optimized around your constraints');
-      }, 2200);
-    } else {
+    setTimeout(() => {
+      genBtn.classList.remove('loading');
+      genBtn.textContent = 'Generate itinerary →';
       setNavActive('itinerary');
       showScreen('itinerary');
-    }
+    }, 1800);
   });
 
   // ===========================================
@@ -138,14 +96,6 @@
     setNavActive('onboard');
     showScreen('book1');
   });
-
-  var headerBookBtn = document.getElementById('headerBookBtn');
-  if (headerBookBtn) {
-    headerBookBtn.addEventListener('click', () => {
-      setNavActive('onboard');
-      showScreen('book1');
-    });
-  }
 
   document.getElementById('ctaPlanBtn').addEventListener('click', () => {
     setNavActive('onboard');
@@ -209,22 +159,9 @@
   renderGrid('intlGrid', intlSpots);
 
   function selectDestination(name) {
-    if (blobLoader) {
-      blobLoader.classList.add('active');
-      if (blobLoadingTitle) blobLoadingTitle.textContent = 'Building ' + name + ' Itinerary…';
-      if (blobLoadingSub) blobLoadingSub.textContent = 'Optimizing routes, restaurant reservations, and live alerts';
-
-      setTimeout(() => {
-        blobLoader.classList.remove('active');
-        setNavActive('itinerary');
-        showScreen('itinerary');
-        showToast('✈', 'Personalized itinerary ready for ' + name);
-      }, 1600);
-    } else {
-      setNavActive('itinerary');
-      showScreen('itinerary');
-      showToast('✈', 'Building your ' + name + ' itinerary…');
-    }
+    setNavActive('itinerary');
+    showScreen('itinerary');
+    showToast('✈', 'Building your ' + name + ' itinerary…');
   }
 
   // ===========================================
