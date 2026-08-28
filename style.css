@@ -546,7 +546,7 @@ img { display: block; max-width: 100%; }
 .hero-title {
   font-family: var(--display);
   font-weight: 300;
-  font-size: clamp(46px, 9vw, 118px);
+  font-size: clamp(32px, 6vw, 72px);
   line-height: 0.94;
   letter-spacing: -0.035em;
   margin: 20px 0 0;
@@ -580,7 +580,7 @@ img { display: block; max-width: 100%; }
 .hero-subtitle {
   max-width: 46ch;
   margin-top: 26px;
-  font-size: 16.5px;
+  font-size: 14.5px;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.86);
 }

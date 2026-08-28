@@ -376,7 +376,7 @@
     //   0.22 = settles in ~80ms, which smooths out the uneven gaps
     //          between scroll events without any perceptible lag.
     // Either way, when scrolling stops the video stops on that exact frame.
-    const SCRUB_EASE = 0.22;
+    const SCRUB_EASE = 0.12;
 
     let videoReady = false;
     let videoDur   = 0;
