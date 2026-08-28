@@ -564,10 +564,19 @@
         } else if (kind === 'row') {
           el.style.setProperty('--p', enterProgress(rect, 0.95, 0.68).toFixed(4));
 
+        } else if (kind === 'adapt') {
+          // The adapt section drives its --p from scroll position just like everything else.
+          // CSS uses calc() on --p to stagger the alert, before, after, and explanation.
+          const p = enterProgress(rect, 0.88, 0.28);
+          el.style.setProperty('--p', p.toFixed(4));
+
         } else {
           el.style.setProperty('--p', enterProgress(rect, 0.92, 0.6).toFixed(4));
         }
       }
+
+      // --- story progress indicator ---
+      updateStoryProgress();
     }
 
     function onScroll() {
@@ -622,6 +631,63 @@
   })();
 
   Scroll.init();
+
+  // ===========================================
+  // Story Progress Indicator
+  // ===========================================
+
+  const storySections = Array.prototype.slice.call(document.querySelectorAll('[data-story-section]'));
+  const storyDots     = Array.prototype.slice.call(document.querySelectorAll('.sp-dot'));
+  const storyNav      = document.getElementById('storyProgress');
+  let currentStory    = 0;
+
+  function updateStoryProgress() {
+    if (!storyNav || storySections.length === 0) return;
+
+    // Show progress only on the home screen
+    const homeActive = document.getElementById('home');
+    if (!homeActive || !homeActive.classList.contains('active')) {
+      storyNav.style.opacity = '0';
+      storyNav.style.pointerEvents = 'none';
+      return;
+    }
+    storyNav.style.opacity = '1';
+    storyNav.style.pointerEvents = 'auto';
+
+    // Find which section is most visible (closest center to viewport center)
+    var vh = window.innerHeight;
+    var center = vh * 0.5;
+    var best = 0;
+    var bestDist = Infinity;
+
+    for (var i = 0; i < storySections.length; i++) {
+      var rect = storySections[i].getBoundingClientRect();
+      var mid  = rect.top + rect.height * 0.5;
+      var dist = Math.abs(mid - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+
+    if (best !== currentStory) {
+      currentStory = best;
+      storyDots.forEach(function (dot, idx) {
+        dot.classList.toggle('active', idx === best);
+      });
+    }
+  }
+
+  // Click-to-scroll on progress dots
+  storyDots.forEach(function (dot) {
+    dot.addEventListener('click', function (e) {
+      e.preventDefault();
+      var idx = parseInt(dot.dataset.story, 10);
+      if (storySections[idx]) {
+        storySections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
 
   // ===========================================
   // Magnetic tilt on cards

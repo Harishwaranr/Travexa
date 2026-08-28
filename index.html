@@ -42,8 +42,18 @@
       <!-- ===== LANDING / HOME ===== -->
       <section class="screen active" id="home">
 
+        <!-- Story progress indicator -->
+        <nav class="story-progress" id="storyProgress" aria-label="Scroll progress">
+          <a href="#" data-story="0" class="sp-dot active"><span>Discover</span></a>
+          <a href="#" data-story="1" class="sp-dot"><span>Plan</span></a>
+          <a href="#" data-story="2" class="sp-dot"><span>Experience</span></a>
+          <a href="#" data-story="3" class="sp-dot"><span>Adapt</span></a>
+          <a href="#" data-story="4" class="sp-dot"><span>Go</span></a>
+        </nav>
+
         <!-- Scroll-driven hero -->
-        <div class="hero-stage" id="heroStage">
+        <!-- ACT 1: DISCOVER -->
+        <div class="hero-stage" id="heroStage" data-story-section="0">
           <div class="hero-sticky">
 
             <div class="hero-media" id="heroMedia">
@@ -95,7 +105,7 @@
             </div>
 
             <div class="hero-rail" aria-hidden="true">
-              <span class="rail-item" data-rail="0">Explore</span>
+              <span class="rail-item" data-rail="0">Discover</span>
               <span class="rail-item" data-rail="1">Plan</span>
               <span class="rail-item" data-rail="2">Go</span>
             </div>
@@ -111,59 +121,59 @@
         <!-- Manifesto: word-by-word reveal driven by scroll -->
         <section class="manifesto" data-scroll="manifesto">
           <p class="manifesto-line" id="manifesto">
-            A plan is only good while it still fits the day. Travexa keeps yours fitting.
+            You know where you want to go. You just need someone to make it fit — your time, your taste, your real life.
           </p>
         </section>
 
-        <!-- Capabilities -->
-        <section class="capabilities">
+        <!-- ACT 2: PLAN -->
+        <section class="capabilities" data-story-section="1">
           <div class="section-head" data-scroll="fade">
-            <p class="eyebrow">What Travexa does</p>
-            <h2 class="section-title">Four moments of a trip, handled.</h2>
+            <p class="eyebrow">How it works</p>
+            <h2 class="section-title">Tell Travexa your constraints.<br>It builds the plan.</h2>
           </div>
 
           <div class="feature-card stagger-1" data-scroll="row" data-reveal>
-            <div class="feature-stage">Before you go</div>
+            <div class="feature-stage">Step 1</div>
             <div class="feature-body">
-              <div class="feature-title">Itineraries built from constraints</div>
-              <div class="feature-desc">Balances time, budget, distance, and your actual interests — not a generic top-ten list.</div>
+              <div class="feature-title">Your preferences</div>
+              <div class="feature-desc">Interests, budget, pace, dietary needs, trip vibe — entered in two minutes through quick chips or your own words.</div>
             </div>
             <div class="feature-icon green">✦</div>
           </div>
 
           <div class="feature-card stagger-2" data-scroll="row" data-reveal>
-            <div class="feature-stage">Booking</div>
+            <div class="feature-stage">Step 2</div>
             <div class="feature-body">
-              <div class="feature-title">Stays, tables, and local guides</div>
-              <div class="feature-desc">Hotels, restaurants matched to dietary needs, and guides who know the street — all from one place.</div>
+              <div class="feature-title">Constraint engine</div>
+              <div class="feature-desc">Balances time windows, distance between stops, cost limits, and live safety data in one pass — not a generic top-ten list.</div>
             </div>
             <div class="feature-icon teal">◈</div>
           </div>
 
           <div class="feature-card stagger-3" data-scroll="row" data-reveal>
-            <div class="feature-stage">On the ground</div>
+            <div class="feature-stage">Step 3</div>
             <div class="feature-body">
-              <div class="feature-title">Live, area-aware safety</div>
-              <div class="feature-desc">Crowding and risk for the block you're standing on, shown as a plain breakdown you can open.</div>
+              <div class="feature-title">Day-by-day itinerary</div>
+              <div class="feature-desc">A structured route with timed stops, each one explained — why it fits your interest, where it sits in the day, how far it is from the last.</div>
             </div>
             <div class="feature-icon amber">◎</div>
           </div>
 
           <div class="feature-card stagger-4" data-scroll="row" data-reveal>
-            <div class="feature-stage">When plans change</div>
+            <div class="feature-stage">Step 4</div>
             <div class="feature-body">
-              <div class="feature-title">Every change explained</div>
-              <div class="feature-desc">When weather or a closure moves a stop, Travexa says what changed and why it picked the replacement.</div>
+              <div class="feature-title">Stays, tables & local guides</div>
+              <div class="feature-desc">Hotels, restaurants matched to dietary and allergy needs, and verified local guides — all attached to the itinerary, not scattered across tabs.</div>
             </div>
             <div class="feature-icon blue">↻</div>
           </div>
         </section>
 
-        <!-- Horizontal strip, position driven by scroll -->
-        <section class="strip-section" data-scroll="strip" id="stripSection">
+        <!-- ACT 3: EXPERIENCE -->
+        <section class="strip-section" data-scroll="strip" id="stripSection" data-story-section="2">
           <div class="section-head narrow" data-scroll="fade">
-            <p class="eyebrow">Currently planning</p>
-            <h2 class="section-title">Where people are going.</h2>
+            <p class="eyebrow">Your journey</p>
+            <h2 class="section-title">Real destinations. Real experiences.</h2>
           </div>
 
           <div class="strip">
@@ -198,13 +208,87 @@
               </article>
             </div>
           </div>
+
+          <!-- Experience preview: what a trip actually looks like -->
+          <div class="experience-preview">
+            <div class="exp-label" data-scroll="fade">A sample day in Lisbon</div>
+            <div class="exp-route">
+              <div class="exp-stop" data-scroll="row">
+                <div class="exp-icon">🏨</div>
+                <div class="exp-detail">
+                  <b>Boutique hotel in Alfama</b>
+                  <span>Booked · matches your budget · 4 min to first stop</span>
+                </div>
+              </div>
+              <div class="exp-stop" data-scroll="row">
+                <div class="exp-icon">🍽</div>
+                <div class="exp-detail">
+                  <b>Feitoria — vegetarian-friendly</b>
+                  <span>Reserved · allergy-aware · 6 min walk</span>
+                </div>
+              </div>
+              <div class="exp-stop" data-scroll="row">
+                <div class="exp-icon">🎨</div>
+                <div class="exp-detail">
+                  <b>Ana Silva — tile workshop guide</b>
+                  <span>★ 4.9 · English, Portuguese · 128 reviews</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
-        <!-- Closing -->
-        <section class="cta-band" data-scroll="fade">
+        <!-- ACT 4: ADAPT -->
+        <section class="adapt-section" data-scroll="adapt" data-story-section="3">
+          <div class="section-head" data-scroll="fade">
+            <p class="eyebrow">When plans change</p>
+            <h2 class="section-title">Travexa adapts.<br>And tells you why.</h2>
+          </div>
+
+          <div class="adapt-stage">
+            <div class="adapt-card">
+              <!-- Weather alert -->
+              <div class="adapt-alert">
+                <span class="adapt-alert-icon">☁</span>
+                <span>Rain expected at 2:00 PM</span>
+              </div>
+
+              <!-- Before state -->
+              <div class="adapt-before">
+                <div class="adapt-stop-time">14:00</div>
+                <div class="adapt-stop-name">Belém Tower walk</div>
+                <div class="adapt-stop-tag">Outdoor · history · waterfront</div>
+              </div>
+
+              <!-- After state -->
+              <div class="adapt-after">
+                <div class="adapt-stop-time">14:00</div>
+                <div class="adapt-stop-name">Tile workshop (indoor)</div>
+                <div class="adapt-stop-tag">Indoor · craft · matches your interest</div>
+              </div>
+
+              <!-- Arrow between states -->
+              <div class="adapt-arrow">→</div>
+
+              <!-- Explanation -->
+              <div class="adapt-explain">
+                <div class="adapt-explain-title">Every change is explained</div>
+                <div class="adapt-explain-desc">Weather shifted the plan — Travexa swapped in an indoor stop matching your craft interest, kept the same time slot, and showed you why.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ACT 5: GO -->
+        <section class="cta-band" data-scroll="fade" data-story-section="4">
           <h2 class="cta-title">Ready when you are.</h2>
           <p class="cta-sub">Two minutes of preferences. One plan that adapts for the rest of the trip.</p>
           <button class="btn-primary wide" id="ctaPlanBtn">Start planning →</button>
+          <div class="cta-trust">
+            <span>✦ Constraint-optimized</span>
+            <span>◎ Live safety data</span>
+            <span>↻ Real-time adaptation</span>
+          </div>
         </section>
       </section>
 
