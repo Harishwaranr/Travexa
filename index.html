@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travexa — Personalized Journeys</title>
+  <meta name="description" content="Travexa builds day-by-day itineraries from your time, budget, and taste — and keeps them honest as conditions change.">
+  <meta name="theme-color" content="#f2f6fb">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="site-header" id="siteHeader">
+    <div class="header-inner">
+      <div class="logo">Travexa</div>
+
+      <div class="header-actions">
+        <nav class="nav-tabs" aria-label="Main navigation">
+          <button data-screen="home" class="active" id="nav-home">Home</button>
+          <button data-screen="onboard" id="nav-plan">Plan</button>
+          <button data-screen="itinerary" id="nav-itinerary">Itinerary</button>
+          <button data-screen="guides" id="nav-guides">Guides</button>
+        </nav>
+        <button class="theme-toggle" id="themeToggle" aria-label="Switch to dark mode">
+          <span class="theme-icon">☾</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <main>
+
+      <!-- ===== LANDING / HOME ===== -->
+      <section class="screen active" id="home">
+
+        <!-- Scroll-driven hero -->
+        <div class="hero-stage" id="heroStage">
+          <div class="hero-sticky">
+
+            <div class="hero-media" id="heroMedia">
+
+              <!-- Scroll-controlled journey. No controls, no autoplay, no loop:
+                   the only thing that ever moves this is scroll position. -->
+              <video class="hero-video" id="heroVideo"
+                     src="video/travel-journey.mp4"
+                     poster="images/local.jpg"
+                     muted
+                     playsinline
+                     webkit-playsinline
+                     preload="auto"
+                     disablepictureinpicture
+                     disableremoteplayback
+                     aria-hidden="true"
+                     tabindex="-1"></video>
+
+              <!-- Still fallback: stays in place if the video fails to load
+                   or the visitor prefers reduced motion. -->
+              <figure class="scene" data-scene="0">
+                <img src="images/local.jpg" alt="" aria-hidden="true">
+              </figure>
+              <figure class="scene" data-scene="1">
+                <img src="images/japan.jpg" alt="" aria-hidden="true">
+              </figure>
+              <figure class="scene" data-scene="2">
+                <img src="images/jaipur.jpg" alt="" aria-hidden="true">
+              </figure>
+              <div class="hero-veil"></div>
+            </div>
+
+            <div class="hero">
+              <p class="eyebrow" id="heroEyebrow">Personalized journeys</p>
+
+              <h1 class="hero-title">
+                <span class="hero-line l1">Travel, planned</span>
+                <span class="hero-line l2"><em class="highlight">around you.</em></span>
+              </h1>
+
+              <p class="hero-subtitle">
+                Tell Travexa your time, your budget, and what you actually like.
+                It returns a day-by-day plan — and rewrites it the moment the day changes.
+              </p>
+
+              <button class="hero-cta" id="heroBookBtn">
+                Book a trip <span class="arrow">→</span>
+              </button>
+            </div>
+
+            <div class="hero-rail" aria-hidden="true">
+              <span class="rail-item" data-rail="0">Explore</span>
+              <span class="rail-item" data-rail="1">Plan</span>
+              <span class="rail-item" data-rail="2">Go</span>
+            </div>
+
+            <div class="scroll-cue" id="scrollCue" aria-hidden="true">
+              <span>Scroll</span>
+              <i class="cue-line"></i>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Manifesto: word-by-word reveal driven by scroll -->
+        <section class="manifesto" data-scroll="manifesto">
+          <p class="manifesto-line" id="manifesto">
+            A plan is only good while it still fits the day. Travexa keeps yours fitting.
+          </p>
+        </section>
+
+        <!-- Capabilities -->
+        <section class="capabilities">
+          <div class="section-head" data-scroll="fade">
+            <p class="eyebrow">What Travexa does</p>
+            <h2 class="section-title">Four moments of a trip, handled.</h2>
+          </div>
+
+          <div class="feature-card stagger-1" data-scroll="row" data-reveal>
+            <div class="feature-stage">Before you go</div>
+            <div class="feature-body">
+              <div class="feature-title">Itineraries built from constraints</div>
+              <div class="feature-desc">Balances time, budget, distance, and your actual interests — not a generic top-ten list.</div>
+            </div>
+            <div class="feature-icon green">✦</div>
+          </div>
+
+          <div class="feature-card stagger-2" data-scroll="row" data-reveal>
+            <div class="feature-stage">Booking</div>
+            <div class="feature-body">
+              <div class="feature-title">Stays, tables, and local guides</div>
+              <div class="feature-desc">Hotels, restaurants matched to dietary needs, and guides who know the street — all from one place.</div>
+            </div>
+            <div class="feature-icon teal">◈</div>
+          </div>
+
+          <div class="feature-card stagger-3" data-scroll="row" data-reveal>
+            <div class="feature-stage">On the ground</div>
+            <div class="feature-body">
+              <div class="feature-title">Live, area-aware safety</div>
+              <div class="feature-desc">Crowding and risk for the block you're standing on, shown as a plain breakdown you can open.</div>
+            </div>
+            <div class="feature-icon amber">◎</div>
+          </div>
+
+          <div class="feature-card stagger-4" data-scroll="row" data-reveal>
+            <div class="feature-stage">When plans change</div>
+            <div class="feature-body">
+              <div class="feature-title">Every change explained</div>
+              <div class="feature-desc">When weather or a closure moves a stop, Travexa says what changed and why it picked the replacement.</div>
+            </div>
+            <div class="feature-icon blue">↻</div>
+          </div>
+        </section>
+
+        <!-- Horizontal strip, position driven by scroll -->
+        <section class="strip-section" data-scroll="strip" id="stripSection">
+          <div class="section-head narrow" data-scroll="fade">
+            <p class="eyebrow">Currently planning</p>
+            <h2 class="section-title">Where people are going.</h2>
+          </div>
+
+          <div class="strip">
+            <div class="strip-track" id="stripTrack">
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/goa.jpg')"></div>
+                <div class="strip-meta"><b>Goa</b><span>Beaches, nightlife</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/japan.jpg')"></div>
+                <div class="strip-meta"><b>Japan</b><span>Kyoto temples, Tokyo pace</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/jaipur.jpg')"></div>
+                <div class="strip-meta"><b>Jaipur</b><span>Forts, heritage</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/munnar.jpg')"></div>
+                <div class="strip-meta"><b>Munnar</b><span>Tea hills, cool climate</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/morocco.jpg')"></div>
+                <div class="strip-meta"><b>Morocco</b><span>Markets, desert</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/france.jpg')"></div>
+                <div class="strip-meta"><b>France</b><span>Paris, countryside</span></div>
+              </article>
+              <article class="strip-card">
+                <div class="strip-img" style="background-image:url('images/rishikesh.jpg')"></div>
+                <div class="strip-meta"><b>Rishikesh</b><span>Rivers, yoga</span></div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- Closing -->
+        <section class="cta-band" data-scroll="fade">
+          <h2 class="cta-title">Ready when you are.</h2>
+          <p class="cta-sub">Two minutes of preferences. One plan that adapts for the rest of the trip.</p>
+          <button class="btn-primary wide" id="ctaPlanBtn">Start planning →</button>
+        </section>
+      </section>
+
+      <!-- ===== ONBOARDING / PLAN ===== -->
+      <section class="screen" id="onboard">
+        <div class="plan-card">
+          <p class="eyebrow">Step 1 of 2</p>
+          <h1 class="plan-title">Where to?</h1>
+          <p class="plan-subtitle">Pick a few things, or just tell Travexa in your own words.</p>
+
+          <div class="field-label">Destination</div>
+          <div class="chip-row" data-group="dest">
+            <button class="chip" id="chip-lisbon">Lisbon</button>
+            <button class="chip" id="chip-kyoto">Kyoto</button>
+            <button class="chip" id="chip-capetown">Cape Town</button>
+            <button class="chip" id="chip-oaxaca">Oaxaca</button>
+          </div>
+
+          <div class="field-label">Trip vibe</div>
+          <div class="chip-row" data-group="vibe">
+            <button class="chip" id="chip-foodie">Foodie</button>
+            <button class="chip" id="chip-slow">Slow travel</button>
+            <button class="chip" id="chip-adventure">Adventure</button>
+            <button class="chip" id="chip-culture">Culture-heavy</button>
+          </div>
+
+          <div class="field-label">Budget</div>
+          <div class="chip-row" data-group="budget">
+            <button class="chip" id="chip-backpacker">Backpacker</button>
+            <button class="chip" id="chip-midrange">Mid-range</button>
+            <button class="chip" id="chip-splurge">Splurge</button>
+          </div>
+
+          <div class="field-label">Or describe it your way</div>
+          <textarea class="plan-input" id="planInput" placeholder="I hate mornings, I don't do museums, and I need vegetarian food everywhere..."></textarea>
+
+          <button class="btn-primary" id="genBtn">Generate itinerary →</button>
+          <button class="btn-secondary" id="bookBtn">Book a trip →</button>
+        </div>
+      </section>
+
+      <!-- ===== BOOK STEP 1: Local vs International ===== -->
+      <section class="screen" id="book1">
+        <button class="back-link" id="back1">← Back</button>
+        <h2 class="step-question">Where are you visiting?</h2>
+        <div class="choice-grid">
+          <div class="dest-card tall" data-next="local" id="choice-local">
+            <div class="dest-card-img" style="background-image:url('images/local.jpg'), linear-gradient(155deg, var(--accent-soft), var(--mist));"></div>
+            <div class="overlay"></div>
+            <div class="label"><b>Local</b><span>Explore within your own country</span></div>
+          </div>
+          <div class="dest-card tall" data-next="intl" id="choice-intl">
+            <div class="dest-card-img" style="background-image:url('images/international.jpg'), linear-gradient(155deg, var(--accent-soft), var(--mist));"></div>
+            <div class="overlay"></div>
+            <div class="label"><b>International</b><span>Explore abroad</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BOOK STEP 2: Local Spots ===== -->
+      <section class="screen" id="bookLocal">
+        <button class="back-link" id="backLocal">← Back</button>
+        <h2 class="step-question">Popular spots near you</h2>
+        <div class="dest-grid" id="localGrid"></div>
+      </section>
+
+      <!-- ===== BOOK STEP 2: International Destinations ===== -->
+      <section class="screen" id="bookIntl">
+        <button class="back-link" id="backIntl">← Back</button>
+        <h2 class="step-question">Popular international destinations</h2>
+        <div class="dest-grid" id="intlGrid"></div>
+      </section>
+
+      <!-- ===== ITINERARY ===== -->
+      <section class="screen" id="itinerary">
+        <div class="itin-head">
+          <p class="eyebrow">Lisbon · 3 days</p>
+          <h2 class="section-title">Your day, in order.</h2>
+        </div>
+
+        <div class="day-tabs" id="dayTabs">
+          <button class="active">Day 1</button>
+          <button>Day 2</button>
+          <button>Day 3</button>
+        </div>
+
+        <button class="safety-pill" id="safetyPill">
+          <span class="safety-dot" id="safetyDot"></span>
+          <span class="safety-text"><strong id="safetyText">Alfama — low risk</strong>, festival nearby</span>
+          <span class="safety-live">LIVE</span>
+        </button>
+
+        <div class="safety-breakdown" id="safetyBreak">
+          <div class="safety-row">
+            <span>Recent incident reports</span>
+            <span>2 (last 30 days)</span>
+          </div>
+          <div class="safety-row">
+            <span>Crowd density right now</span>
+            <span>Moderate</span>
+          </div>
+          <div class="safety-row">
+            <span>Nearby events</span>
+            <span>Santo António street festival</span>
+          </div>
+          <p class="safety-note">Sample data for this prototype — production would use live city datasets.</p>
+        </div>
+
+        <div class="route">
+          <div class="route-line"></div>
+
+          <div class="stop">
+            <div class="stop-node done"></div>
+            <div class="stop-time">09:00</div>
+            <div class="stop-name">Miradouro das Portas do Sol</div>
+            <div class="stop-reason">Matches your interest in views — quiet before the crowds arrive</div>
+          </div>
+
+          <div class="stop">
+            <div class="stop-node done"></div>
+            <div class="stop-time">11:30</div>
+            <div class="stop-name">Feitoria restaurant <span class="stop-badge">Booked</span></div>
+            <div class="stop-reason">No shellfish, within budget, 6 min walk from last stop</div>
+            <div class="booking-card">
+              <div class="booking-info">
+                <b>Feitoria — Table for 2</b>
+                <span class="booking-tags">Vegetarian options · Allergy-aware · $$</span>
+              </div>
+              <button class="booking-action done" id="bookingFeitoria">Booked ✓</button>
+            </div>
+          </div>
+
+          <div class="stop" id="stop3">
+            <div class="stop-node" id="node3"></div>
+            <div class="stop-time">14:00</div>
+            <div class="stop-name" id="stop3name">Belém Tower walk</div>
+            <div class="stop-reason" id="stop3reason">Matches your interest in history, low crowd window</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== GUIDES ===== -->
+      <section class="screen" id="guides">
+        <div class="itin-head">
+          <p class="eyebrow">Local guides in Lisbon</p>
+          <h2 class="section-title">People who know the street.</h2>
+        </div>
+
+        <div class="guide-card" id="guide-ana">
+          <div class="guide-avatar">AS</div>
+          <div class="guide-body">
+            <div class="guide-name">Ana Silva</div>
+            <div class="guide-meta">Tile workshops · English, Portuguese · <span class="star">★</span> 4.9</div>
+          </div>
+          <button class="guide-add">Add to day →</button>
+        </div>
+
+        <div class="guide-card" id="guide-miguel">
+          <div class="guide-avatar">MC</div>
+          <div class="guide-body">
+            <div class="guide-name">Miguel Costa</div>
+            <div class="guide-meta">Fado &amp; nightlife · English, Spanish · <span class="star">★</span> 4.8</div>
+          </div>
+          <button class="guide-add">Add to day →</button>
+        </div>
+
+        <div class="guide-card" id="guide-rita">
+          <div class="guide-avatar">RP</div>
+          <div class="guide-body">
+            <div class="guide-name">Rita Pereira</div>
+            <div class="guide-meta">Food markets · English, French · <span class="star">★</span> 5.0</div>
+          </div>
+          <button class="guide-add">Add to day →</button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="site-footer">
+      <div class="foot-mark">Travexa</div>
+      <p class="foot-note">Itineraries built from your constraints, not from a list.</p>
+      <div class="foot-row">
+        <span class="mono">38.7169° N, 9.1399° W</span>
+        <span class="mono">Prototype build</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">☁</span>
+    <span id="toastText">Rain expected at 2pm — swapped Belém Tower walk for a tile workshop</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
