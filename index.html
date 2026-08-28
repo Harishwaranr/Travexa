@@ -37,6 +37,48 @@
   </header>
 
   <div class="app-container">
+
+    <!-- ===== TRIP TRACKER — visible through the booking flow ===== -->
+    <nav class="trip-tracker" id="tripTracker" aria-label="Trip progress" hidden>
+      <div class="tracker-inner">
+        <button type="button" class="tracker-step" data-step="destination">
+          <span class="tracker-mark" aria-hidden="true">○</span>
+          <span class="tracker-text">
+            <span class="tracker-label">Destination</span>
+            <span class="tracker-value" data-value="destination">Not chosen</span>
+          </span>
+        </button>
+        <button type="button" class="tracker-step" data-step="hotel">
+          <span class="tracker-mark" aria-hidden="true">○</span>
+          <span class="tracker-text">
+            <span class="tracker-label">Hotel</span>
+            <span class="tracker-value" data-value="hotel">Not chosen</span>
+          </span>
+        </button>
+        <button type="button" class="tracker-step" data-step="restaurant">
+          <span class="tracker-mark" aria-hidden="true">○</span>
+          <span class="tracker-text">
+            <span class="tracker-label">Restaurant</span>
+            <span class="tracker-value" data-value="restaurant">Not chosen</span>
+          </span>
+        </button>
+        <button type="button" class="tracker-step" data-step="guide">
+          <span class="tracker-mark" aria-hidden="true">○</span>
+          <span class="tracker-text">
+            <span class="tracker-label">Guide</span>
+            <span class="tracker-value" data-value="guide">Not chosen</span>
+          </span>
+        </button>
+        <button type="button" class="tracker-step" data-step="others">
+          <span class="tracker-mark" aria-hidden="true">○</span>
+          <span class="tracker-text">
+            <span class="tracker-label">Others</span>
+            <span class="tracker-value" data-value="others">None</span>
+          </span>
+        </button>
+      </div>
+    </nav>
+
     <main>
 
       <!-- ===== LANDING / HOME ===== -->
@@ -501,6 +543,17 @@
           <p class="screen-lede">Matched to your budget, and to how far they sit from the first stop of your day.</p>
         </div>
 
+        <form class="place-search" id="hotelSearch">
+          <input class="place-input" id="hotelQuery" type="search"
+                 placeholder="Search hotels or destination…" autocomplete="off">
+          <button class="place-btn" type="submit">Search</button>
+        </form>
+        <p class="place-hint" id="hotelHint"></p>
+
+        <div class="place-status" id="hotelStatus" hidden></div>
+        <div class="hotels-grid" id="hotelResults"></div>
+
+        <div id="hotelDemo">
         <div class="guide-card">
           <div class="guide-avatar">CA</div>
           <div class="guide-body">
@@ -528,7 +581,12 @@
           <button class="guide-add" data-toast="Baixa House held for your dates.">Reserve →</button>
         </div>
 
-        <p class="demo-note">Demo listings — this prototype does not connect to real hotel inventory.</p>
+        <p class="demo-note">Sample stays — search above for real places near your destination.</p>
+        </div>
+
+        <div class="flow-actions">
+          <button class="btn-primary wide" id="hotelNext">Continue to Restaurant →</button>
+        </div>
       </section>
 
       <!-- ===== RESTAURANT ===== -->
@@ -539,6 +597,17 @@
           <p class="screen-lede">Filtered against your dietary needs and allergies before anything reaches your itinerary.</p>
         </div>
 
+        <form class="place-search" id="restaurantSearch">
+          <input class="place-input" id="restaurantQuery" type="search"
+                 placeholder="Search restaurants or destination…" autocomplete="off">
+          <button class="place-btn" type="submit">Search</button>
+        </form>
+        <p class="place-hint" id="restaurantHint"></p>
+
+        <div class="place-status" id="restaurantStatus" hidden></div>
+        <div class="hotels-grid" id="restaurantResults"></div>
+
+        <div id="restaurantDemo">
         <div class="guide-card">
           <div class="guide-avatar">FE</div>
           <div class="guide-body">
@@ -566,7 +635,12 @@
           <button class="guide-add" data-toast="Table request sent for Casa Verde.">Book table →</button>
         </div>
 
-        <p class="demo-note">Demo listings — this prototype does not send real reservations.</p>
+        <p class="demo-note">Sample tables — search above for real places near your destination.</p>
+        </div>
+
+        <div class="flow-actions">
+          <button class="btn-primary wide" id="restaurantNext">Continue to Guide →</button>
+        </div>
       </section>
 
       <!-- ===== GUIDE — on-demand local guides ===== -->
@@ -672,6 +746,59 @@
             <h3 class="gx-benefit-title">Trusted</h3>
             <p class="gx-benefit-desc">View ratings, reviews and guide profiles before requesting.</p>
           </article>
+        </div>
+
+        <div class="flow-actions">
+          <button class="btn-primary wide" id="guideNext">Continue to Others →</button>
+        </div>
+      </section>
+
+      <!-- ===== OTHERS — popular spots near the destination ===== -->
+      <section class="screen" id="others">
+        <div class="itin-head">
+          <p class="eyebrow">Popular spots near you</p>
+          <h2 class="section-title">Pick the places you want.</h2>
+          <p class="screen-lede">Attractions, landmarks, museums, parks, cafés — choose as many as you like.</p>
+        </div>
+
+        <form class="place-search" id="othersSearch">
+          <input class="place-input" id="othersQuery" type="search"
+                 placeholder="Search attractions, museums, cafés…" autocomplete="off">
+          <button class="place-btn" type="submit">Search</button>
+        </form>
+
+        <div class="place-chips" id="othersChips">
+          <button type="button" class="chip" data-q="attractions">Attractions</button>
+          <button type="button" class="chip" data-q="landmark">Landmarks</button>
+          <button type="button" class="chip" data-q="museum">Museums</button>
+          <button type="button" class="chip" data-q="park">Parks</button>
+          <button type="button" class="chip" data-q="cafe">Cafés</button>
+          <button type="button" class="chip" data-q="shopping">Shopping</button>
+        </div>
+
+        <p class="place-hint" id="othersHint"></p>
+        <button type="button" class="place-near-btn" id="othersNearMe">Use my current location</button>
+
+        <div class="place-status" id="othersStatus" hidden></div>
+        <div class="hotels-grid" id="othersResults"></div>
+
+        <div class="flow-actions">
+          <button class="btn-primary wide" id="othersNext">Finish — see my trip →</button>
+        </div>
+      </section>
+
+      <!-- ===== TRIP SUMMARY ===== -->
+      <section class="screen" id="tripSummary">
+        <div class="itin-head">
+          <p class="eyebrow">Your trip</p>
+          <h2 class="section-title" id="summaryTitle">Trip to your destination.</h2>
+          <p class="screen-lede">Everything you picked, in one place. Tap any row to change it.</p>
+        </div>
+
+        <div class="summary-list" id="summaryList"></div>
+
+        <div class="flow-actions">
+          <button class="btn-secondary" id="summaryRestart">Start a new trip</button>
         </div>
       </section>
 

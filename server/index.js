@@ -14,8 +14,10 @@ app.use(express.json());
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
-// API routes
+// API routes — one Foursquare router, mounted for both hotel and general
+// place searches so there is a single integration to maintain.
 app.use('/api/hotels', hotelsRoute);
+app.use('/api/places', hotelsRoute);
 
 // Fallback: serve index.html for any non-API route
 app.get('*', (req, res) => {

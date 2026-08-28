@@ -7,15 +7,19 @@ const FSQ_VERSION = '2025-06-17';
 
 /**
  * GET /api/hotels?location=Lisbon&budget=mid&limit=8
+ * GET /api/places?location=Paris&query=restaurant&limit=12
  *
- * Returns real hotels near the given location from Foursquare.
- *  - location: city name or "lat,lng"
+ * One Foursquare integration, mounted at both paths. Returns real places
+ * near the given location.
+ *  - location: city name, or "lat,lng" for a browser geolocation fix
+ *  - query:    what to search for (default "hotel"); e.g. restaurant,
+ *              museum, park, cafe, landmark
  *  - budget:   low | mid | high  (maps to Foursquare price 1-4)
  *  - limit:    number of results (default 8, max 50)
  */
 router.get('/', async (req, res) => {
   try {
-    const { location, budget, limit } = req.query;
+    const { location, budget, limit, query } = req.query;
 
     if (!location) {
       return res.status(400).json({ error: 'Missing "location" parameter' });
@@ -27,11 +31,22 @@ router.get('/', async (req, res) => {
 
     // Build Foursquare query
     const params = new URLSearchParams({
-      query: 'hotel',
-      near: location,
+      query: (query && String(query).trim()) || 'hotel',
       limit: String(Math.min(parseInt(limit) || 8, 50)),
       sort: 'RELEVANCE'
     });
+
+    // A "lat,lng" location is a geolocation fix and must go through `ll`;
+    // anything else is a place name and goes through `near`.
+    const asCoords = String(location).trim()
+      .match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/);
+
+    if (asCoords) {
+      params.append('ll', `${asCoords[1]},${asCoords[2]}`);
+      params.append('radius', '8000');
+    } else {
+      params.append('near', location);
+    }
 
     // Map budget to Foursquare price filter (1=cheap, 4=expensive)
     if (budget === 'low') { params.append('min_price', '1'); params.append('max_price', '2'); }
@@ -87,10 +102,14 @@ router.get('/', async (req, res) => {
       };
     });
 
+    // `hotels` is kept for the original /api/hotels consumers; `places` is
+    // the same array under a neutral name for restaurant / attraction searches.
     res.json({
       location: location,
+      query: params.get('query'),
       count: hotels.length,
-      hotels: hotels
+      hotels: hotels,
+      places: hotels
     });
 
   } catch (err) {

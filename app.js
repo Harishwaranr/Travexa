@@ -32,6 +32,9 @@
       window.scrollTo(0, 0);
       Scroll.refresh();
 
+      // Booking-flow chrome (tracker + per-screen data loading)
+      syncFlowChrome(id);
+
       if (id === 'itinerary') startLiveDemo();
     };
 
@@ -134,18 +137,22 @@
 
   document.getElementById('bookBtn').addEventListener('click', () => showScreen('book1'));
 
-  document.getElementById('heroBookBtn').addEventListener('click', () => {
-    setNavActive('onboard');
-    showScreen('book1');
-  });
-
-  var headerBookBtn = document.getElementById('headerBookBtn');
-  if (headerBookBtn) {
-    headerBookBtn.addEventListener('click', () => {
+  // "Book Trip" starts the booking flow. With a destination already chosen it
+  // jumps straight to the Hotel step; otherwise it asks for the destination.
+  function startBooking() {
+    if (Trip.get('destination')) {
+      setNavActive('hotel');
+      showScreen('hotel');
+    } else {
       setNavActive('onboard');
       showScreen('book1');
-    });
+    }
   }
+
+  document.getElementById('heroBookBtn').addEventListener('click', startBooking);
+
+  var headerBookBtn = document.getElementById('headerBookBtn');
+  if (headerBookBtn) headerBookBtn.addEventListener('click', startBooking);
 
   document.getElementById('ctaPlanBtn').addEventListener('click', () => {
     setNavActive('onboard');
@@ -208,22 +215,25 @@
   renderGrid('localGrid', localSpots);
   renderGrid('intlGrid', intlSpots);
 
+  // Choosing a destination sets the trip and opens the first booking step.
   function selectDestination(name) {
+    Trip.set('destination', name);
+
     if (blobLoader) {
       blobLoader.classList.add('active');
-      if (blobLoadingTitle) blobLoadingTitle.textContent = 'Building ' + name + ' Itinerary…';
-      if (blobLoadingSub) blobLoadingSub.textContent = 'Optimizing routes, restaurant reservations, and live alerts';
+      if (blobLoadingTitle) blobLoadingTitle.textContent = 'Preparing ' + name + '…';
+      if (blobLoadingSub) blobLoadingSub.textContent = 'Finding stays, tables and guides around your destination';
 
       setTimeout(() => {
         blobLoader.classList.remove('active');
-        setNavActive('itinerary');
-        showScreen('itinerary');
-        showToast('✈', 'Personalized itinerary ready for ' + name);
+        setNavActive('hotel');
+        showScreen('hotel');
+        showToast('✈', 'Destination set to ' + name + ' — pick your stay.');
       }, 1600);
     } else {
-      setNavActive('itinerary');
-      showScreen('itinerary');
-      showToast('✈', 'Building your ' + name + ' itinerary…');
+      setNavActive('hotel');
+      showScreen('hotel');
+      showToast('✈', 'Destination set to ' + name + ' — pick your stay.');
     }
   }
 
@@ -353,6 +363,11 @@
   // scrolling up reverses it, frame for frame.
   // Nothing here fires once and latches.
   // ===========================================
+
+  // The scroll engine's update() calls updateStoryProgress(), and a cached
+  // video can make that happen while this IIFE is still being built — before
+  // storyNav/storyDots below exist. This flag keeps the early call harmless.
+  let storyReady = false;
 
   const Scroll = (function () {
     let targets = [];
@@ -663,8 +678,10 @@
   const storyDots  = Array.prototype.slice.call(document.querySelectorAll('.sp-dot'));
   const storyNav   = document.getElementById('storyProgress');
   let currentStory = -1;
+  storyReady = true;
 
   function updateStoryProgress() {
+    if (!storyReady) return;
     if (!storyNav || storyDots.length === 0) return;
 
     // Show progress only on the home screen
@@ -773,6 +790,73 @@
       showToast('◈', btn.dataset.toast || (name + ' saved to your trip.'));
     });
   });
+
+  // ===========================================
+  // TRIP STATE
+  // One store for everything the traveller picks.
+  // Survives reloads so a half-finished trip is not lost.
+  // ===========================================
+
+  const Trip = (function () {
+    const KEY = 'travexa.trip';
+    const BLANK = {
+      destination: null,   // "Paris", "Goa", or a "lat,lng" fix
+      coords: null,        // set when the destination came from geolocation
+      hotel: null,
+      restaurant: null,
+      guide: null,
+      others: []
+    };
+
+    let data = read();
+
+    function read() {
+      try {
+        const raw = window.localStorage.getItem(KEY);
+        if (raw) return Object.assign({}, BLANK, JSON.parse(raw));
+      } catch (e) { /* storage blocked or corrupt — fall through */ }
+      return Object.assign({}, BLANK);
+    }
+
+    function write() {
+      try { window.localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    }
+
+    function get(key) { return key ? data[key] : data; }
+
+    function set(key, value) {
+      data[key] = value;
+      write();
+      renderTracker();
+    }
+
+    // "Others" is multi-select: the same place toggles off when picked again.
+    function toggleOther(place) {
+      const at = data.others.findIndex(p => p.id === place.id);
+      if (at >= 0) data.others.splice(at, 1);
+      else data.others.push(place);
+      write();
+      renderTracker();
+      return at < 0;
+    }
+
+    function hasOther(id) {
+      return data.others.some(p => p.id === id);
+    }
+
+    function reset() {
+      data = Object.assign({}, BLANK, { others: [] });
+      write();
+      renderTracker();
+    }
+
+    // What the Foursquare search should be centred on.
+    function searchArea() {
+      return data.coords || data.destination || '';
+    }
+
+    return { get, set, toggleOther, hasOther, reset, searchArea };
+  })();
 
   // ===========================================
   // GUIDE — on-demand local guides
@@ -1135,6 +1219,14 @@
       }
       if (locStatus) locStatus.textContent = g.name + ' is on the way · demo';
 
+      // Record the guide on the trip so the tracker and summary pick it up.
+      Trip.set('guide', {
+        id: 'guide-' + idx,
+        name: g.name,
+        meta: g.languages + ' · ' + g.specialties,
+        address: g.distance + ' · arrives ' + g.eta
+      });
+
       showToast('◈', g.name + ' requested — demo only, no guide was dispatched.');
     }
 
@@ -1152,5 +1244,481 @@
     });
 
   })();
+
+  // ===========================================
+  // TRIP TRACKER
+  // Reflects the real trip state and lets the
+  // traveller jump back to any step to edit it.
+  // ===========================================
+
+  const FLOW_SCREENS = ['book1', 'bookLocal', 'bookIntl', 'hotel', 'restaurant',
+                        'guide', 'others', 'tripSummary'];
+
+  const trackerEl = document.getElementById('tripTracker');
+
+  function stepValue(step) {
+    const t = Trip.get();
+    if (step === 'destination') return t.destination || null;
+    if (step === 'others') {
+      return t.others.length ? t.others.map(p => p.name).join(', ') : null;
+    }
+    return t[step] ? t[step].name : null;
+  }
+
+  function renderTracker() {
+    if (!trackerEl) return;
+    const active = document.querySelector('.screen.active');
+    const current = active ? active.id : '';
+
+    trackerEl.querySelectorAll('.tracker-step').forEach(btn => {
+      const step = btn.dataset.step;
+      const value = stepValue(step);
+      const isCurrent = step === current ||
+        (step === 'destination' && ['book1', 'bookLocal', 'bookIntl'].indexOf(current) >= 0);
+
+      btn.classList.toggle('done', !!value && !isCurrent);
+      btn.classList.toggle('current', isCurrent);
+
+      const mark = btn.querySelector('.tracker-mark');
+      if (mark) mark.textContent = isCurrent ? '•' : (value ? '✓' : '○');
+
+      const out = btn.querySelector('.tracker-value');
+      if (out) {
+        out.textContent = value || (step === 'others' ? 'None' : 'Not chosen');
+        out.title = value || '';
+      }
+    });
+  }
+
+  // Clicking a tracker step returns to it without clearing anything else.
+  if (trackerEl) {
+    trackerEl.addEventListener('click', e => {
+      const btn = e.target.closest('.tracker-step');
+      if (!btn) return;
+      const step = btn.dataset.step;
+      if (step === 'destination') {
+        setNavActive('onboard');
+        showScreen('book1');
+      } else {
+        setNavActive(step);
+        showScreen(step);
+      }
+    });
+  }
+
+  // Called from showScreen: tracker visibility + per-screen data loading.
+  function syncFlowChrome(id) {
+    if (trackerEl) trackerEl.hidden = FLOW_SCREENS.indexOf(id) < 0;
+    renderTracker();
+    if (id === 'hotel' || id === 'restaurant' || id === 'others') Places.prime(id);
+    if (id === 'tripSummary') renderSummary();
+  }
+
+  // ===========================================
+  // PLACES — the one Foursquare client
+  // Talks to the existing /api/hotels route (also
+  // mounted at /api/places). No second integration.
+  // ===========================================
+
+  const Places = (function () {
+
+    // Per-screen wiring. `query` is the default Foursquare search term.
+    const PANES = {
+      hotel:      { query: 'hotel',      multi: false, key: 'hotel' },
+      restaurant: { query: 'restaurant', multi: false, key: 'restaurant' },
+      others:     { query: 'attractions', multi: true, key: 'others' }
+    };
+
+    // Remembers the last successful search per pane so returning to a screen
+    // does not silently re-hit the API.
+    const cache = {};
+
+    // Rising token per pane: a slow earlier response must not overwrite a
+    // newer one when the traveller searches twice in quick succession.
+    const token = {};
+
+    // server/index.js serves the API *and* the site, so a relative /api path
+    // is right when the page came from it. A plain static dev server (VS Code
+    // Live Server, or a file:// open) cannot answer /api at all, so point
+    // those at the Travexa server's default port instead. CORS is already
+    // enabled server-side, so the cross-origin call is allowed.
+    const API_BASE = (function () {
+      const port = window.location.port;
+      const staticDev = window.location.protocol === 'file:' ||
+                        port === '5500' || port === '5501';
+      return staticDev ? 'http://localhost:3001' : '';
+    })();
+
+    // Turn a failure into something the reader can actually act on.
+    function explainFailure(err) {
+      const code = err && err.status;
+      const detail = (err && err.detail) || '';
+
+      if (/key not configured/i.test(detail)) {
+        return 'Foursquare API key not configured. Create a .env file next to ' +
+               'package.json containing FOURSQUARE_API_KEY=your-key, then restart ' +
+               'the server with npm run dev.';
+      }
+      if (code === 401 || code === 403) {
+        return 'Foursquare rejected the API key. Check FOURSQUARE_API_KEY in your .env file.';
+      }
+      if (code === 429) {
+        return 'Foursquare rate limit reached. Wait a moment and try again.';
+      }
+      if (code === 404) {
+        return 'The Travexa server is not answering /api/places. Start it with ' +
+               'npm run dev and open http://localhost:3001.';
+      }
+      if (code === 0) {
+        return 'Cannot reach the Travexa server. Start it with npm run dev, ' +
+               'then open http://localhost:3001.';
+      }
+      return 'Unable to load places. Please try again.';
+    }
+
+    function el(pane, suffix) {
+      return document.getElementById(pane + suffix);
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    }
+
+    function status(pane, html, isError) {
+      const box = el(pane, 'Status');
+      if (!box) return;
+      if (!html) { box.hidden = true; box.innerHTML = ''; return; }
+      box.hidden = false;
+      box.classList.toggle('is-error', !!isError);
+      box.innerHTML = html;
+    }
+
+    function hint(pane, text) {
+      const h = el(pane, 'Hint');
+      if (h) h.textContent = text || '';
+    }
+
+    function hideDemo(pane) {
+      const demo = el(pane, 'Demo');
+      if (demo) demo.hidden = true;
+    }
+
+    function cardMarkup(place, pane, picked) {
+      const cfg = PANES[pane];
+      const bits = [];
+      if (place.category) bits.push(esc(place.category));
+      if (place.rating) bits.push('<span class="star">★</span> ' + esc(place.rating));
+      if (place.priceLevel) bits.push(esc('$'.repeat(place.priceLevel)));
+
+      const img = place.photo
+        ? '<img class="hotel-card-img" src="' + esc(place.photo) + '" alt="" loading="lazy">'
+        : '<div class="hotel-card-noimg">No photo</div>';
+
+      return '' +
+        '<article class="hotel-card' + (picked ? ' selected' : '') + '" data-id="' + esc(place.id) + '">' +
+          img +
+          '<span class="hotel-card-pick">' + (picked ? '✓' : (cfg.multi ? '+' : '○')) + '</span>' +
+          '<div class="hotel-card-body">' +
+            '<h4 class="hotel-card-name">' + esc(place.name) + '</h4>' +
+            '<p class="hotel-card-address">' + esc(place.address || place.city || '') + '</p>' +
+            (bits.length ? '<div class="hotel-card-meta">' + bits.join(' · ') + '</div>' : '') +
+          '</div>' +
+        '</article>';
+    }
+
+    function paint(pane, places) {
+      const grid = el(pane, 'Results');
+      if (!grid) return;
+      const cfg = PANES[pane];
+      grid.innerHTML = places.map(p => {
+        const picked = cfg.multi
+          ? Trip.hasOther(p.id)
+          : (Trip.get(cfg.key) || {}).id === p.id;
+        return cardMarkup(p, pane, picked);
+      }).join('');
+    }
+
+    // The single network call. Everything routes through here.
+    async function search(pane, opts) {
+      opts = opts || {};
+      const cfg = PANES[pane];
+      const area = opts.area || Trip.searchArea();
+      const term = (opts.query || '').trim() || cfg.query;
+
+      if (!area) {
+        status(pane, 'Choose a destination first, or search a city by name.', false);
+        paint(pane, []);
+        return;
+      }
+
+      hideDemo(pane);
+      // Clear first: results for the previous city must never sit under a
+      // search that is already running for a new one.
+      paint(pane, []);
+      hint(pane, 'Searching “' + term + '” near ' + area);
+      status(pane, '<span class="spinner"></span><span>Finding places…</span>', false);
+
+      const mine = (token[pane] = (token[pane] || 0) + 1);
+
+      const url = API_BASE + '/api/places?location=' + encodeURIComponent(area) +
+                  '&query=' + encodeURIComponent(term) + '&limit=12';
+
+      try {
+        let res;
+        try {
+          res = await fetch(url);
+        } catch (netErr) {
+          // Server down / DNS / CORS preflight refused — no HTTP status exists.
+          throw Object.assign(new Error('unreachable'), { status: 0 });
+        }
+
+        if (!res.ok) {
+          let detail = '';
+          try { detail = (await res.json()).error || ''; } catch (e) { /* not JSON */ }
+          throw Object.assign(new Error(detail || ('HTTP ' + res.status)),
+                              { status: res.status, detail: detail });
+        }
+
+        const data = await res.json();
+        if (mine !== token[pane]) return;   // superseded by a newer search
+        const places = (data.places || data.hotels || []).filter(p => p && p.id);
+
+        if (!places.length) {
+          paint(pane, []);
+          status(pane, 'No places found. Try another search.', false);
+          cache[pane] = null;
+          return;
+        }
+
+        cache[pane] = { area: area, term: term, places: places };
+        status(pane, '');
+        hint(pane, places.length + ' results for “' + term + '” near ' + area);
+        paint(pane, places);
+
+      } catch (err) {
+        if (mine !== token[pane]) return;
+        console.warn('Places search failed:', err);
+        paint(pane, []);
+        hint(pane, '');
+        status(pane, explainFailure(err), true);
+      }
+    }
+
+    // Load a screen's results on first arrival, or when the destination moved.
+    function prime(pane) {
+      if (!PANES[pane]) return;
+      const area = Trip.searchArea();
+      const seen = cache[pane];
+      if (!area) {
+        hint(pane, 'Pick a destination to see real places here');
+        return;
+      }
+      if (seen && seen.area === area) {
+        paint(pane, seen.places);
+        hint(pane, seen.places.length + ' results for “' + seen.term + '” near ' + area);
+        status(pane, '');
+        hideDemo(pane);
+        return;
+      }
+      search(pane, {});
+    }
+
+    return { search: search, prime: prime, repaint: p => cache[p] && paint(p, cache[p].places) };
+  })();
+
+  // ===========================================
+  // BOOKING FLOW WIRING
+  // ===========================================
+
+  // A typed search may be a place type ("sushi") or a destination ("Paris").
+  // If the trip has no destination yet, the typed text is treated as the area.
+  function runPaneSearch(pane, raw) {
+    const text = (raw || '').trim();
+    if (!Trip.get('destination') && text) {
+      Trip.set('destination', text);
+      Trip.set('coords', null);
+      Places.search(pane, { area: text });
+      return;
+    }
+    Places.search(pane, { query: text });
+  }
+
+  ['hotel', 'restaurant', 'others'].forEach(pane => {
+    const form = document.getElementById(pane + 'Search');
+    const input = document.getElementById(pane + 'Query');
+    if (form) {
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        runPaneSearch(pane, input ? input.value : '');
+      });
+    }
+
+    // One delegated listener per results grid — cards are re-rendered often.
+    const grid = document.getElementById(pane + 'Results');
+    if (!grid) return;
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('.hotel-card');
+      if (!card || !grid.contains(card)) return;
+      pickPlace(pane, card.dataset.id);
+    });
+  });
+
+  function pickPlace(pane, id) {
+    const grid = document.getElementById(pane + 'Results');
+    const card = grid && grid.querySelector('.hotel-card[data-id="' + id + '"]');
+    if (!card) return;
+
+    // Rebuild the place object from what was rendered, so selections survive
+    // without holding a second copy of the API response.
+    const place = {
+      id: id,
+      name: card.querySelector('.hotel-card-name').textContent,
+      address: card.querySelector('.hotel-card-address').textContent,
+      meta: (card.querySelector('.hotel-card-meta') || {}).textContent || '',
+      photo: (card.querySelector('.hotel-card-img') || {}).src || null
+    };
+
+    if (pane === 'others') {
+      const added = Trip.toggleOther(place);
+      showToast('◈', added ? place.name + ' added to your trip.'
+                           : place.name + ' removed.');
+    } else {
+      Trip.set(pane, place);
+      showToast('◈', place.name + ' selected.');
+    }
+    Places.repaint(pane);
+  }
+
+  // Quick category chips on the Others screen
+  const othersChips = document.getElementById('othersChips');
+  if (othersChips) {
+    othersChips.addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      othersChips.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      const input = document.getElementById('othersQuery');
+      if (input) input.value = chip.dataset.q;
+      Places.search('others', { query: chip.dataset.q });
+    });
+  }
+
+  // "Use my current location" on the Others screen — reuses the browser
+  // geolocation the Guide screen already asks for.
+  const othersNearMe = document.getElementById('othersNearMe');
+  if (othersNearMe) {
+    othersNearMe.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showToast('◎', 'This browser cannot share your location.');
+        return;
+      }
+      othersNearMe.textContent = 'Locating…';
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const ll = pos.coords.latitude.toFixed(5) + ',' + pos.coords.longitude.toFixed(5);
+          othersNearMe.textContent = 'Use my current location';
+          Trip.set('coords', ll);
+          Places.search('others', { area: ll });
+        },
+        () => {
+          othersNearMe.textContent = 'Use my current location';
+          showToast('◎', 'Location access denied — search by destination instead.');
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+      );
+    });
+  }
+
+  // --- step-to-step navigation -------------------------------------------
+
+  function advance(from, to, requireKey, nudge) {
+    const btn = document.getElementById(from + 'Next');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      if (requireKey && !Trip.get(requireKey)) {
+        showToast('◈', nudge);
+        return;
+      }
+      setNavActive(to);
+      showScreen(to);
+    });
+  }
+
+  advance('hotel', 'restaurant', 'hotel', 'Pick a hotel first, or search to see options.');
+  advance('restaurant', 'guide', 'restaurant', 'Pick a restaurant first, or search to see options.');
+  advance('guide', 'others', null, '');
+  advance('others', 'tripSummary', null, '');
+
+  const summaryRestart = document.getElementById('summaryRestart');
+  if (summaryRestart) {
+    summaryRestart.addEventListener('click', () => {
+      Trip.reset();
+      setNavActive('onboard');
+      showScreen('book1');
+      showToast('✦', 'Trip cleared — pick a new destination.');
+    });
+  }
+
+  // --- trip summary -------------------------------------------------------
+
+  function renderSummary() {
+    const list = document.getElementById('summaryList');
+    if (!list) return;
+    const t = Trip.get();
+
+    const title = document.getElementById('summaryTitle');
+    if (title) {
+      title.textContent = t.destination ? 'Trip to ' + t.destination + '.' : 'Your trip.';
+    }
+
+    const rows = [
+      { step: 'destination', key: 'Destination', value: t.destination, sub: '' },
+      { step: 'hotel',       key: 'Hotel',       value: t.hotel && t.hotel.name,
+        sub: t.hotel ? (t.hotel.address || '') : '' },
+      { step: 'restaurant',  key: 'Restaurant',  value: t.restaurant && t.restaurant.name,
+        sub: t.restaurant ? (t.restaurant.address || '') : '' },
+      { step: 'guide',       key: 'Guide',       value: t.guide && t.guide.name,
+        sub: t.guide ? (t.guide.meta || '') : '' },
+      { step: 'others',      key: 'Others',      value: t.others.length
+        ? t.others.map(p => p.name).join(', ') : null,
+        sub: t.others.length ? t.others.length + ' place' + (t.others.length > 1 ? 's' : '') + ' selected' : '' }
+    ];
+
+    list.innerHTML = rows.map(r => '' +
+      '<button type="button" class="summary-row" data-step="' + r.step + '">' +
+        '<span class="summary-key">' + r.key + '</span>' +
+        '<span>' +
+          '<span class="summary-val' + (r.value ? '' : ' empty') + '">' +
+            (r.value ? escapeText(r.value) : 'Not chosen yet') + '</span>' +
+          (r.sub ? '<span class="summary-sub">' + escapeText(r.sub) + '</span>' : '') +
+        '</span>' +
+        '<span class="summary-edit">Edit</span>' +
+      '</button>').join('');
+  }
+
+  function escapeText(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, c =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  }
+
+  const summaryList = document.getElementById('summaryList');
+  if (summaryList) {
+    summaryList.addEventListener('click', e => {
+      const row = e.target.closest('.summary-row');
+      if (!row) return;
+      const step = row.dataset.step;
+      if (step === 'destination') {
+        setNavActive('onboard');
+        showScreen('book1');
+      } else {
+        setNavActive(step);
+        showScreen(step);
+      }
+    });
+  }
+
+  // Restore the tracker for whatever screen is showing on load.
+  renderTracker();
 
 })();
