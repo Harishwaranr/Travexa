@@ -993,6 +993,7 @@
       map.querySelectorAll('.gx-marker').forEach(function (m) { m.remove(); });
       if (mapEmpty) mapEmpty.hidden = false;
       if (locBar) locBar.hidden = true;
+      if (locValue) locValue.textContent = 'Locating…';
       if (blockedMsg) blockedMsg.textContent = message;
       setState('blocked');
     }

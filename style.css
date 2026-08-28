@@ -2510,3 +2510,1269 @@ html[data-theme="dark"] .guide-avatar {
   display: inline-flex !important;
   font-size: 13px !important;
 }
+
+/* ============================================
+   HOTELS SECTION (Foursquare API)
+   ============================================ */
+.hotels-section {
+  margin-top: 48px;
+  padding-bottom: 48px;
+}
+
+.hotels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.hotel-card {
+  background: var(--bg);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--sh-sm);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+  cursor: default;
+}
+.hotel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sh-lg);
+}
+
+.hotel-card-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  background: var(--mist);
+  display: block;
+}
+
+.hotel-card-body {
+  padding: 16px 18px 18px;
+}
+
+.hotel-card-name {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.hotel-card-address {
+  font-size: 12.5px;
+  color: var(--dim);
+  line-height: 1.45;
+  margin: 0 0 10px;
+}
+
+.hotel-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.hotel-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  letter-spacing: 0.01em;
+}
+
+.hotel-card-distance {
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+.hotel-card-contact {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--mist);
+}
+.hotel-card-contact a {
+  font-size: 11.5px;
+  color: var(--accent-deep);
+  text-decoration: none;
+  font-weight: 500;
+}
+.hotel-card-contact a:hover {
+  text-decoration: underline;
+}
+
+.hotels-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+
+.hotels-loading .spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--mist);
+  border-top-color: var(--accent-deep);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   GUIDE — on-demand local guides
+   Reuses the Travexa card / type / token system;
+   only the map and the request states are new.
+   ============================================ */
+[hidden] {
+  display: none !important;
+}
+
+.screen-lede {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 54ch;
+}
+
+.demo-note {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+.gx {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-top: 30px;
+}
+
+.gx-stage {
+  min-width: 0;
+  position: sticky;
+  top: calc(var(--header-h) + 24px);
+}
+
+.gx-panel {
+  min-width: 0;
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+  padding: 26px 24px;
+}
+
+/* --- stylized map (no external map service) --- */
+.gx-map {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3.4;
+  min-height: 300px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  background: var(--inset);
+  box-shadow: var(--sh-sm);
+}
+
+.gx-map-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--line-soft) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line-soft) 1px, transparent 1px);
+  background-size: 46px 46px;
+  opacity: 0.85;
+}
+
+.gx-map-block {
+  position: absolute;
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--ok) 13%, transparent);
+}
+
+.gx-map-block.b1 {
+  left: 8%;
+  top: 12%;
+  width: 24%;
+  height: 20%;
+}
+
+.gx-map-block.b2 {
+  right: 9%;
+  bottom: 14%;
+  width: 22%;
+  height: 24%;
+}
+
+.gx-map-water {
+  position: absolute;
+  left: -12%;
+  bottom: -22%;
+  width: 70%;
+  height: 46%;
+  transform: rotate(-14deg);
+  border-radius: 46% 54% 40% 60%;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.gx-map-road {
+  position: absolute;
+  background: var(--paper-2);
+}
+
+.gx-map-road.rd1 {
+  left: 0;
+  right: 0;
+  top: 54%;
+  height: 12px;
+}
+
+.gx-map-road.rd2 {
+  top: 0;
+  bottom: 0;
+  left: 44%;
+  width: 12px;
+}
+
+.gx-map-empty {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  max-width: 84%;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: color-mix(in srgb, var(--paper-2) 88%, transparent);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  padding: 7px 14px;
+}
+
+/* Distance rings give the guide distances a visible scale */
+.gx-ring {
+  position: absolute;
+  left: 44%;
+  top: 54%;
+  border-radius: 50%;
+  border: 1px dashed var(--line);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-smooth);
+  pointer-events: none;
+}
+
+.gx-map.live .gx-ring,
+.gx-map.locating .gx-ring {
+  opacity: 1;
+}
+
+.gx-ring.r1 {
+  width: 46%;
+  height: 46%;
+}
+
+.gx-ring.r2 {
+  width: 82%;
+  height: 82%;
+}
+
+.gx-ring span {
+  position: absolute;
+  top: 50%;
+  right: -1px;
+  transform: translate(50%, -50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  background: var(--inset);
+  padding: 1px 5px;
+  border-radius: var(--r-pill);
+}
+
+.gx-compass {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--paper-2) 90%, transparent);
+  border: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+}
+
+.gx-scale {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+
+.gx-scale i {
+  display: block;
+  width: 42px;
+  height: 6px;
+  border: 1px solid var(--ink-3);
+  border-top: 0;
+  opacity: 0.6;
+}
+
+.gx-you {
+  position: absolute;
+  left: 44%;
+  top: 54%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  z-index: 4;
+}
+
+.gx-you-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent-deep);
+  border: 3px solid var(--paper-2);
+  box-shadow: var(--sh-sm);
+}
+
+.gx-you-pulse {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.35;
+}
+
+.gx-map.locating .gx-you-pulse,
+.gx-map.live .gx-you-pulse {
+  animation: gxPulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes gxPulse {
+  from {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: scale(5.5);
+    opacity: 0;
+  }
+}
+
+/* The coordinates read out on the map itself, pinned to your dot */
+.gx-you-tag {
+  position: absolute;
+  top: 17px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 5px 10px;
+  white-space: nowrap;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--sh-sm);
+}
+
+.gx-you-tag b {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-you-tag i {
+  font-style: normal;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.gx-radar {
+  position: absolute;
+  left: 44%;
+  top: 54%;
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border-radius: 50%;
+  opacity: 0;
+  background: conic-gradient(from 0deg,
+      color-mix(in srgb, var(--accent) 26%, transparent),
+      transparent 32%);
+  transition: opacity 0.5s var(--ease-smooth);
+  pointer-events: none;
+}
+
+.gx-map.locating .gx-radar {
+  opacity: 1;
+  animation: gxSweep 2.2s linear infinite;
+}
+
+@keyframes gxSweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gx-marker {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%) scale(0.6);
+  opacity: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--paper-2);
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  box-shadow: var(--sh-sm);
+  transition: transform 0.5s var(--ease-out), opacity 0.45s var(--ease-smooth),
+    background-color 0.3s var(--ease-out), border-color 0.3s var(--ease-out);
+}
+
+html[data-theme="dark"] .gx-marker {
+  color: var(--accent);
+}
+
+.gx-marker.in {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.gx-marker:hover,
+.gx-marker.selected {
+  background: var(--accent-deep);
+  color: #fff;
+  z-index: 5;
+}
+
+.gx-marker-eta {
+  position: absolute;
+  top: 40px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--paper-2) 92%, transparent);
+  border-radius: var(--r-pill);
+  padding: 2px 7px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gx-locbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-xs);
+}
+
+.gx-loc-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-loc-status {
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+/* --- panel states --- */
+.gx-state-title {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.gx-state-desc {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.gx-support {
+  margin-top: 14px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-spinner {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  animation: gxSpin 0.85s linear infinite;
+}
+
+@keyframes gxSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gx-blocked-icon {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 14px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.gx-results-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.gx-results-count {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.gx-results-sub {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* --- guide card --- */
+.gx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gx-card {
+  padding: 16px 16px 14px;
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-xs);
+  animation: gxCardIn 0.5s var(--ease-out) both;
+  transition: box-shadow 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+}
+
+@keyframes gxCardIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gx-card:hover,
+.gx-card.selected {
+  box-shadow: var(--sh-md);
+  border-color: var(--line);
+}
+
+.gx-card.selected {
+  border-color: var(--accent);
+}
+
+.gx-card-top {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  gap: 13px;
+  align-items: center;
+}
+
+.gx-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+html[data-theme="dark"] .gx-avatar {
+  color: var(--accent);
+}
+
+.gx-card-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+
+.gx-badge {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  border-radius: var(--r-pill);
+  padding: 3px 8px;
+}
+
+html[data-theme="dark"] .gx-badge {
+  color: var(--accent);
+}
+
+.gx-card-rating {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+.gx-card-eta {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.gx-card-eta b {
+  display: block;
+  font-family: var(--body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gx-card-eta span {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.gx-facts {
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line-soft);
+  display: grid;
+  gap: 8px;
+}
+
+.gx-fact {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.gx-fact dt {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-fact dd {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.gx-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.gx-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 11px 16px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: transform 0.28s var(--ease-out), background-color 0.28s var(--ease-out),
+    border-color 0.28s var(--ease-out), box-shadow 0.28s var(--ease-out);
+}
+
+.gx-btn.ghost {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.gx-btn.ghost:hover {
+  background: var(--mist);
+  border-color: var(--accent);
+}
+
+.gx-btn.solid {
+  border: 1px solid var(--accent-deep);
+  background: var(--accent-deep);
+  color: #fff;
+  box-shadow: var(--sh-xs);
+}
+
+.gx-btn.solid:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--sh-sm);
+}
+
+.gx-btn:active {
+  transform: scale(0.985);
+}
+
+/* --- benefits --- */
+.gx-benefits {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.gx-benefit {
+  padding: 22px 20px;
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-xs);
+  transition: box-shadow 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+}
+
+.gx-benefit:hover {
+  box-shadow: var(--sh-md);
+  border-color: var(--line);
+}
+
+.gx-benefit .feature-icon {
+  justify-self: start;
+}
+
+.gx-benefit-title {
+  margin-top: 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.gx-benefit-desc {
+  margin-top: 7px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+/* --- modal --- */
+.gx-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  background: rgba(8, 16, 30, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: gxFade 0.28s var(--ease-smooth) both;
+}
+
+@keyframes gxFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.gx-modal {
+  position: relative;
+  width: min(430px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 28px 26px 26px;
+  background: var(--paper-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lg);
+  animation: gxRise 0.4s var(--ease-out) both;
+}
+
+@keyframes gxRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gx-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.3s var(--ease-out), color 0.3s var(--ease-out);
+}
+
+.gx-modal-close:hover {
+  background: var(--mist);
+  color: var(--ink);
+}
+
+.gx-modal-title {
+  font-family: var(--display);
+  font-weight: 300;
+  font-size: 26px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  padding-right: 34px;
+}
+
+.gx-modal-desc {
+  margin-top: 9px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.gx-modal-profile {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 13px;
+  align-items: center;
+  margin-top: 20px;
+  padding: 14px;
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.gx-modal-profile .gx-avatar {
+  width: 46px;
+  height: 46px;
+  background: var(--paper-2);
+}
+
+.gx-summary {
+  margin-top: 20px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.gx-summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.gx-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.gx-summary-row dt {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  flex: 0 0 auto;
+}
+
+.gx-summary-row dd {
+  font-size: 13.5px;
+  color: var(--ink);
+  text-align: right;
+  min-width: 0;
+}
+
+.gx-msg-label {
+  display: block;
+  margin: 20px 0 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-msg-input {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  padding: 13px 15px;
+  font-family: var(--body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--inset);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  transition: border-color 0.3s var(--ease-out);
+}
+
+.gx-msg-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.gx-modal-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.gx-modal-actions.two {
+  grid-template-columns: 1fr 1.35fr;
+}
+
+.gx-status-mark {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--ok) 16%, transparent);
+  color: var(--ok);
+  font-size: 22px;
+  animation: gxPop 0.5s var(--ease-out) both;
+}
+
+@keyframes gxPop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.gx-route {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px 15px;
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-md);
+}
+
+.gx-route-end {
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  text-align: center;
+}
+
+.gx-route-end .gx-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--paper-2);
+}
+
+.gx-route-pin {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--accent-deep);
+  font-size: 15px;
+}
+
+html[data-theme="dark"] .gx-route-pin {
+  color: var(--accent);
+}
+
+.gx-route-cap {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.gx-route-path {
+  position: relative;
+  height: 2px;
+  border-radius: 2px;
+  background: repeating-linear-gradient(to right,
+      var(--line) 0 7px,
+      transparent 7px 13px);
+}
+
+.gx-route-path::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: gxTravel 2.6s var(--ease-smooth) infinite;
+}
+
+@keyframes gxTravel {
+  from {
+    left: 0;
+    opacity: 0;
+  }
+
+  15%,
+  85% {
+    opacity: 1;
+  }
+
+  to {
+    left: calc(100% - 8px);
+    opacity: 0;
+  }
+}
+
+.gx-demo-tag {
+  display: inline-block;
+  margin-top: 18px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: var(--inset);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r-pill);
+  padding: 4px 11px;
+}
+
+/* --- guide responsive --- */
+@media (max-width: 900px) {
+  .gx {
+    grid-template-columns: 1fr;
+  }
+
+  .gx-stage {
+    position: static;
+  }
+
+  .gx-benefits {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  #guide {
+    max-width: none;
+  }
+
+  .gx-panel {
+    padding: 22px 18px;
+  }
+
+  .gx-map {
+    aspect-ratio: 4 / 3.6;
+    min-height: 260px;
+  }
+
+  .gx-card-top {
+    grid-template-columns: 42px minmax(0, 1fr);
+    row-gap: 10px;
+  }
+
+  .gx-card-eta {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .gx-card-eta b {
+    display: inline;
+  }
+
+  .gx-card-actions,
+  .gx-modal-actions.two {
+    grid-template-columns: 1fr;
+  }
+
+  .gx-fact {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .gx-modal {
+    padding: 24px 18px 20px;
+  }
+
+  .gx-modal-title {
+    font-size: 23px;
+  }
+
+  .gx-summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+
+  .gx-summary-row dd {
+    text-align: left;
+  }
+
+  .gx-you-tag i {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .gx-benefits {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gx-card {
+    animation: none;
+  }
+
+  .gx-marker,
+  .gx-marker.in {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    animation: none;
+  }
+
+  .gx-radar,
+  .gx-you-pulse,
+  .gx-route-path::after {
+    display: none;
+  }
+}
+
+/* The coordinate tag only exists once there is a real fix to show */
+.gx-you-tag {
+  display: none;
+}
+
+.gx-map.locating .gx-you-tag,
+.gx-map.live .gx-you-tag {
+  display: grid;
+}

@@ -589,13 +589,21 @@
               <div class="gx-map-road rd1" aria-hidden="true"></div>
               <div class="gx-map-road rd2" aria-hidden="true"></div>
 
+              <div class="gx-ring r1" aria-hidden="true"><span>1 km</span></div>
+              <div class="gx-ring r2" aria-hidden="true"><span>2 km</span></div>
               <div class="gx-radar" aria-hidden="true"></div>
 
               <div class="gx-you">
                 <span class="gx-you-pulse" aria-hidden="true"></span>
                 <span class="gx-you-dot" aria-hidden="true"></span>
-                <span class="gx-you-label">You</span>
+                <span class="gx-you-tag">
+                  <b>You are here</b>
+                  <i class="gx-loc-value" id="gxLocValue">Locating…</i>
+                </span>
               </div>
+
+              <div class="gx-compass" aria-hidden="true">N</div>
+              <div class="gx-scale" aria-hidden="true"><i></i><span>500 m</span></div>
 
               <!-- guide markers are injected here by app.js -->
 
@@ -603,10 +611,7 @@
             </div>
 
             <div class="gx-locbar" id="gxLocBar" hidden>
-              <div class="gx-locbar-main">
-                <span class="gx-loc-label">Your Location</span>
-                <span class="gx-loc-value" id="gxLocValue">—</span>
-              </div>
+              <span class="gx-loc-label">Your Location</span>
               <span class="gx-loc-status" id="gxLocStatus">Finding guides near you…</span>
             </div>
           </div>
