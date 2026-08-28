@@ -21,9 +21,9 @@
       <div class="header-actions">
         <nav class="nav-tabs" aria-label="Main navigation">
           <button data-screen="home" class="active" id="nav-home">Home</button>
-          <button data-screen="onboard" id="nav-plan">Plan</button>
-          <button data-screen="itinerary" id="nav-itinerary">Itinerary</button>
-          <button data-screen="guides" id="nav-guides">Guides</button>
+          <button data-screen="hotel" id="nav-hotel">Hotel</button>
+          <button data-screen="restaurant" id="nav-restaurant">Restaurant</button>
+          <button data-screen="guide" id="nav-guide">Guide</button>
         </nav>
         <button class="theme-toggle" id="themeToggle" aria-label="Switch to dark mode">
           <span class="theme-icon">☾</span>
@@ -46,7 +46,7 @@
         <nav class="story-progress" id="storyProgress" aria-label="Scroll progress">
           <a href="#" data-story="0" class="sp-dot active"><span>Discover</span></a>
           <a href="#" data-story="1" class="sp-dot"><span>Plan</span></a>
-          <a href="#" data-story="2" class="sp-dot"><span>Experience</span></a>
+          <a href="#" data-story="2" class="sp-dot"><span>Guide</span></a>
           <a href="#" data-story="3" class="sp-dot"><span>Adapt</span></a>
           <a href="#" data-story="4" class="sp-dot"><span>Go</span></a>
         </nav>
@@ -107,14 +107,14 @@
                 <p class="hero-subtitle">Two minutes of preferences. One optimized route.</p>
               </div>
 
-              <!-- Slide 2: EXPERIENCE -->
+              <!-- Slide 2: GUIDE -->
               <div class="hero-slide" data-slide="2">
-                <p class="eyebrow">Experience</p>
+                <p class="eyebrow">Guide</p>
                 <h2 class="hero-title">
-                  <span class="hero-line l1">Every stop,</span>
-                  <span class="hero-line l2"><em class="highlight">thought through.</em></span>
+                  <span class="hero-line l1">A local guide,</span>
+                  <span class="hero-line l2"><em class="highlight">on demand.</em></span>
                 </h2>
-                <p class="hero-subtitle">Hotels, restaurants, guides — all in your itinerary.</p>
+                <p class="hero-subtitle">Request a nearby guide — they come to you.</p>
               </div>
 
               <!-- Slide 3: ADAPT -->
@@ -145,7 +145,7 @@
             <div class="hero-rail" aria-hidden="true">
               <span class="rail-item" data-rail="0">Discover</span>
               <span class="rail-item" data-rail="1">Plan</span>
-              <span class="rail-item" data-rail="2">Experience</span>
+              <span class="rail-item" data-rail="2">Guide</span>
               <span class="rail-item" data-rail="3">Adapt</span>
               <span class="rail-item" data-rail="4">Go</span>
             </div>
@@ -202,8 +202,8 @@
           <div class="feature-card stagger-4" data-scroll="row" data-reveal>
             <div class="feature-stage">Step 4</div>
             <div class="feature-body">
-              <div class="feature-title">Stays, tables & local guides</div>
-              <div class="feature-desc">Hotels, restaurants matched to dietary and allergy needs, and verified local guides — all attached to the itinerary, not scattered across tabs.</div>
+              <div class="feature-title">Stays, tables & on-demand guides</div>
+              <div class="feature-desc">Hotels, restaurants matched to dietary and allergy needs — and a nearby local guide you can request on the spot, who comes to where you are.</div>
             </div>
             <div class="feature-icon blue">↻</div>
           </div>
@@ -493,38 +493,180 @@
         </div>
       </section>
 
-      <!-- ===== GUIDES ===== -->
-      <section class="screen" id="guides">
+      <!-- ===== HOTEL ===== -->
+      <section class="screen" id="hotel">
         <div class="itin-head">
-          <p class="eyebrow">Local guides in Lisbon</p>
-          <h2 class="section-title">People who know the street.</h2>
+          <p class="eyebrow">Stays</p>
+          <h2 class="section-title">Rooms that fit the plan.</h2>
+          <p class="screen-lede">Matched to your budget, and to how far they sit from the first stop of your day.</p>
         </div>
 
-        <div class="guide-card" id="guide-ana">
-          <div class="guide-avatar">AS</div>
+        <div class="guide-card">
+          <div class="guide-avatar">CA</div>
           <div class="guide-body">
-            <div class="guide-name">Ana Silva</div>
-            <div class="guide-meta">Tile workshops · English, Portuguese · <span class="star">★</span> 4.9</div>
+            <div class="guide-name">Casa Alfama</div>
+            <div class="guide-meta">Boutique · Alfama · 4 min to first stop · <span class="star">★</span> 4.8</div>
           </div>
-          <button class="guide-add">Add to day →</button>
+          <button class="guide-add" data-toast="Casa Alfama held for your dates.">Reserve →</button>
         </div>
 
-        <div class="guide-card" id="guide-miguel">
-          <div class="guide-avatar">MC</div>
+        <div class="guide-card">
+          <div class="guide-avatar">MS</div>
           <div class="guide-body">
-            <div class="guide-name">Miguel Costa</div>
-            <div class="guide-meta">Fado &amp; nightlife · English, Spanish · <span class="star">★</span> 4.8</div>
+            <div class="guide-name">Miradouro Suites</div>
+            <div class="guide-meta">Rooftop views · Graça · quiet street · <span class="star">★</span> 4.7</div>
           </div>
-          <button class="guide-add">Add to day →</button>
+          <button class="guide-add" data-toast="Miradouro Suites held for your dates.">Reserve →</button>
         </div>
 
-        <div class="guide-card" id="guide-rita">
-          <div class="guide-avatar">RP</div>
+        <div class="guide-card">
+          <div class="guide-avatar">BH</div>
           <div class="guide-body">
-            <div class="guide-name">Rita Pereira</div>
-            <div class="guide-meta">Food markets · English, French · <span class="star">★</span> 5.0</div>
+            <div class="guide-name">Baixa House</div>
+            <div class="guide-meta">Central · walkable · within budget · <span class="star">★</span> 4.9</div>
           </div>
-          <button class="guide-add">Add to day →</button>
+          <button class="guide-add" data-toast="Baixa House held for your dates.">Reserve →</button>
+        </div>
+
+        <p class="demo-note">Demo listings — this prototype does not connect to real hotel inventory.</p>
+      </section>
+
+      <!-- ===== RESTAURANT ===== -->
+      <section class="screen" id="restaurant">
+        <div class="itin-head">
+          <p class="eyebrow">Tables</p>
+          <h2 class="section-title">Food that fits your list.</h2>
+          <p class="screen-lede">Filtered against your dietary needs and allergies before anything reaches your itinerary.</p>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-avatar">FE</div>
+          <div class="guide-body">
+            <div class="guide-name">Feitoria</div>
+            <div class="guide-meta">Vegetarian options · allergy-aware · $$ · <span class="star">★</span> 4.8</div>
+          </div>
+          <button class="guide-add" data-toast="Table request sent for Feitoria.">Book table →</button>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-avatar">TM</div>
+          <div class="guide-body">
+            <div class="guide-name">Taberna do Mar</div>
+            <div class="guide-meta">Seafood · shellfish-free on request · $$$ · <span class="star">★</span> 4.7</div>
+          </div>
+          <button class="guide-add" data-toast="Table request sent for Taberna do Mar.">Book table →</button>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-avatar">CV</div>
+          <div class="guide-body">
+            <div class="guide-name">Casa Verde</div>
+            <div class="guide-meta">Vegan · gluten-free kitchen · $ · <span class="star">★</span> 4.9</div>
+          </div>
+          <button class="guide-add" data-toast="Table request sent for Casa Verde.">Book table →</button>
+        </div>
+
+        <p class="demo-note">Demo listings — this prototype does not send real reservations.</p>
+      </section>
+
+      <!-- ===== GUIDE — on-demand local guides ===== -->
+      <section class="screen" id="guide">
+        <div class="itin-head">
+          <p class="eyebrow">On-demand</p>
+          <h2 class="section-title">Need a Local Guide?</h2>
+          <p class="screen-lede">Find a nearby local guide who can come to you and show you the destination like a local.</p>
+        </div>
+
+        <div class="gx">
+
+          <!-- Stylized map: pure HTML/CSS, no external map service -->
+          <div class="gx-stage">
+            <div class="gx-map" id="gxMap">
+              <div class="gx-map-grid" aria-hidden="true"></div>
+              <div class="gx-map-block b1" aria-hidden="true"></div>
+              <div class="gx-map-block b2" aria-hidden="true"></div>
+              <div class="gx-map-water" aria-hidden="true"></div>
+              <div class="gx-map-road rd1" aria-hidden="true"></div>
+              <div class="gx-map-road rd2" aria-hidden="true"></div>
+
+              <div class="gx-radar" aria-hidden="true"></div>
+
+              <div class="gx-you">
+                <span class="gx-you-pulse" aria-hidden="true"></span>
+                <span class="gx-you-dot" aria-hidden="true"></span>
+                <span class="gx-you-label">You</span>
+              </div>
+
+              <!-- guide markers are injected here by app.js -->
+
+              <p class="gx-map-empty" id="gxMapEmpty">Share your location to see guides around you</p>
+            </div>
+
+            <div class="gx-locbar" id="gxLocBar" hidden>
+              <div class="gx-locbar-main">
+                <span class="gx-loc-label">Your Location</span>
+                <span class="gx-loc-value" id="gxLocValue">—</span>
+              </div>
+              <span class="gx-loc-status" id="gxLocStatus">Finding guides near you…</span>
+            </div>
+          </div>
+
+          <!-- Panel: one visible state at a time -->
+          <div class="gx-panel">
+
+            <div class="gx-state" id="gxIdle">
+              <p class="gx-state-title">Guides near your current location</p>
+              <p class="gx-state-desc">Travexa checks your location once, to show which local guides are close enough to reach you.</p>
+              <button class="btn-primary" id="gxFindBtn">Find a Guide Near Me →</button>
+              <p class="gx-support">Your location. Your guide. Your experience.</p>
+            </div>
+
+            <div class="gx-state" id="gxLocating" hidden>
+              <div class="gx-spinner" aria-hidden="true"></div>
+              <p class="gx-state-title">Finding guides near you…</p>
+              <p class="gx-state-desc" id="gxLocatingDesc">Waiting for your browser to share your location.</p>
+            </div>
+
+            <div class="gx-state" id="gxBlocked" hidden>
+              <div class="gx-blocked-icon" aria-hidden="true">◎</div>
+              <p class="gx-state-title">Location access is needed to find guides near you.</p>
+              <p class="gx-state-desc" id="gxBlockedDesc">Allow location for this page in your browser, then try again.</p>
+              <button class="btn-primary" id="gxEnableBtn">Enable Location</button>
+            </div>
+
+            <div class="gx-state" id="gxResults" hidden>
+              <div class="gx-results-head">
+                <span class="gx-results-count" id="gxCount">Guides nearby</span>
+                <span class="gx-results-sub">Closest first</span>
+              </div>
+              <div class="gx-list" id="gxList"></div>
+              <p class="demo-note">Demo profiles — sample guides for this prototype. No real guide is connected or notified.</p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="gx-benefits">
+          <article class="gx-benefit">
+            <div class="feature-icon blue">✦</div>
+            <h3 class="gx-benefit-title">On-demand</h3>
+            <p class="gx-benefit-desc">Find a guide whenever you need one.</p>
+          </article>
+          <article class="gx-benefit">
+            <div class="feature-icon teal">◈</div>
+            <h3 class="gx-benefit-title">Comes to you</h3>
+            <p class="gx-benefit-desc">Your guide can meet you at your current location.</p>
+          </article>
+          <article class="gx-benefit">
+            <div class="feature-icon green">◎</div>
+            <h3 class="gx-benefit-title">Local expert</h3>
+            <p class="gx-benefit-desc">Experience the destination with someone who knows it.</p>
+          </article>
+          <article class="gx-benefit">
+            <div class="feature-icon amber">↻</div>
+            <h3 class="gx-benefit-title">Trusted</h3>
+            <p class="gx-benefit-desc">View ratings, reviews and guide profiles before requesting.</p>
+          </article>
         </div>
       </section>
 
@@ -551,6 +693,14 @@
       </div>
       <div class="blob-loader-title" id="blobLoadingTitle">Synthesizing Constraints…</div>
       <div class="blob-loader-subtitle" id="blobLoadingSub">Balancing time windows, dietary filters, and safety data</div>
+    </div>
+  </div>
+
+  <!-- Guide contact / request modal — body is rendered by app.js -->
+  <div class="gx-modal-overlay" id="gxModal" hidden>
+    <div class="gx-modal" role="dialog" aria-modal="true" aria-labelledby="gxModalTitle">
+      <button class="gx-modal-close" id="gxModalClose" type="button" aria-label="Close">✕</button>
+      <div class="gx-modal-body" id="gxModalBody"></div>
     </div>
   </div>
 

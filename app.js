@@ -656,8 +656,6 @@
     return { init: init, refresh: refresh, update: update, getStage: function () { return heroStoryStage; } };
   })();
 
-  Scroll.init();
-
   // ===========================================
   // Story Progress Indicator
   // ===========================================
@@ -703,6 +701,10 @@
       window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
     });
   });
+
+  // Started here, not earlier: the scroll engine's first update() calls
+  // updateStoryProgress(), which reads storyNav/storyDots above.
+  Scroll.init();
 
   // ===========================================
   // Magnetic tilt on cards
@@ -760,15 +762,394 @@
     });
 
   // ===========================================
-  // Guide "Add to day" feedback
+  // Hotel / Restaurant list actions
+  // Each button carries its own confirmation copy.
   // ===========================================
 
   document.querySelectorAll('.guide-add').forEach(btn => {
     btn.addEventListener('click', () => {
       const card = btn.closest('.guide-card');
-      const name = card ? card.querySelector('.guide-name').textContent : 'Guide';
-      showToast('◈', name + ' added to Day 1.');
+      const name = card ? card.querySelector('.guide-name').textContent : 'Item';
+      showToast('◈', btn.dataset.toast || (name + ' saved to your trip.'));
     });
   });
+
+  // ===========================================
+  // GUIDE — on-demand local guides
+  // Frontend prototype: the profiles below are demo
+  // data and no request ever leaves the browser.
+  // ===========================================
+
+  (function GuideModule() {
+
+    const DEMO_GUIDES = [
+      {
+        initials: 'RT', name: 'Ramesh Thakur',
+        distance: '0.8 km away', eta: '~5 min', arrival: '5–10 min',
+        rating: '4.9', reviews: '124 reviews',
+        languages: 'English · Hindi · Tamil',
+        specialties: 'Local sightseeing · Culture',
+        mark: { x: 28, y: 30 }
+      },
+      {
+        initials: 'PN', name: 'Priya N.',
+        distance: '1.2 km away', eta: '~8 min', arrival: '8–14 min',
+        rating: '4.8', reviews: '98 reviews',
+        languages: 'English · Hindi',
+        specialties: 'Food · Shopping · Local experiences',
+        mark: { x: 71, y: 39 }
+      },
+      {
+        initials: 'TB', name: 'Tenzin Bhutia',
+        distance: '1.8 km away', eta: '~12 min', arrival: '12–18 min',
+        rating: '4.7', reviews: '76 reviews',
+        languages: 'English · Hindi · Tamil',
+        specialties: 'History · Nature · Photography',
+        mark: { x: 63, y: 78 }
+      }
+    ];
+
+    const map        = document.getElementById('gxMap');
+    const mapEmpty   = document.getElementById('gxMapEmpty');
+    const locBar     = document.getElementById('gxLocBar');
+    const locValue   = document.getElementById('gxLocValue');
+    const locStatus  = document.getElementById('gxLocStatus');
+    const findBtn    = document.getElementById('gxFindBtn');
+    const enableBtn  = document.getElementById('gxEnableBtn');
+    const blockedMsg = document.getElementById('gxBlockedDesc');
+    const countEl    = document.getElementById('gxCount');
+    const listEl     = document.getElementById('gxList');
+    const modal      = document.getElementById('gxModal');
+    const modalBody  = document.getElementById('gxModalBody');
+    const modalClose = document.getElementById('gxModalClose');
+
+    const states = {
+      idle:     document.getElementById('gxIdle'),
+      locating: document.getElementById('gxLocating'),
+      blocked:  document.getElementById('gxBlocked'),
+      results:  document.getElementById('gxResults')
+    };
+
+    // The guide screen is optional markup — bail out quietly if it is absent.
+    if (!map || !listEl || !modal || !states.idle) return;
+
+    let revealTimer = null;
+    let selectedIdx = -1;
+    let locationText = 'Current location';
+
+    // --- helpers ------------------------------------------------------
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+    }
+
+    function setState(name) {
+      Object.keys(states).forEach(function (key) {
+        if (states[key]) states[key].hidden = (key !== name);
+      });
+    }
+
+    function formatCoords(pos) {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+      return Math.abs(lat).toFixed(4) + '° ' + (lat >= 0 ? 'N' : 'S') + ', ' +
+             Math.abs(lon).toFixed(4) + '° ' + (lon >= 0 ? 'E' : 'W');
+    }
+
+    // --- map markers --------------------------------------------------
+
+    function renderMarkers() {
+      map.querySelectorAll('.gx-marker').forEach(function (m) { m.remove(); });
+
+      DEMO_GUIDES.forEach(function (g, i) {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'gx-marker';
+        el.style.left = g.mark.x + '%';
+        el.style.top  = g.mark.y + '%';
+        el.dataset.idx = String(i);
+        el.setAttribute('aria-label', g.name + ', ' + g.distance);
+        el.innerHTML = esc(g.initials) +
+          '<span class="gx-marker-eta">' + esc(g.eta) + '</span>';
+        el.addEventListener('click', function () { selectGuide(i, true); });
+        map.appendChild(el);
+        window.setTimeout(function () { el.classList.add('in'); }, 120 + i * 130);
+      });
+    }
+
+    function selectGuide(idx, scrollToCard) {
+      selectedIdx = idx;
+      map.querySelectorAll('.gx-marker').forEach(function (m) {
+        m.classList.toggle('selected', m.dataset.idx === String(idx));
+      });
+      listEl.querySelectorAll('.gx-card').forEach(function (c) {
+        c.classList.toggle('selected', c.dataset.idx === String(idx));
+      });
+      if (scrollToCard) {
+        const card = listEl.querySelector('.gx-card[data-idx="' + idx + '"]');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    // --- guide cards --------------------------------------------------
+
+    function cardMarkup(g, i) {
+      return '' +
+        '<article class="gx-card" data-idx="' + i + '" style="animation-delay:' + (i * 90) + 'ms">' +
+          '<div class="gx-card-top">' +
+            '<div class="gx-avatar">' + esc(g.initials) + '</div>' +
+            '<div>' +
+              '<div class="gx-card-name">' + esc(g.name) +
+                '<span class="gx-badge">Local Guide</span></div>' +
+              '<div class="gx-card-rating"><span class="star">★</span> ' + esc(g.rating) +
+                ' · ' + esc(g.reviews) + '</div>' +
+            '</div>' +
+            '<div class="gx-card-eta"><b>' + esc(g.distance.replace(' away', '')) + '</b>' +
+              '<span>Arrives in ' + esc(g.eta) + '</span></div>' +
+          '</div>' +
+          '<dl class="gx-facts">' +
+            '<div class="gx-fact"><dt>Languages</dt><dd>' + esc(g.languages) + '</dd></div>' +
+            '<div class="gx-fact"><dt>Specialties</dt><dd>' + esc(g.specialties) + '</dd></div>' +
+          '</dl>' +
+          '<div class="gx-card-actions">' +
+            '<button type="button" class="gx-btn ghost" data-act="contact" data-idx="' + i + '">Contact</button>' +
+            '<button type="button" class="gx-btn solid" data-act="request" data-idx="' + i + '">Request Guide</button>' +
+          '</div>' +
+        '</article>';
+    }
+
+    function renderList() {
+      listEl.innerHTML = DEMO_GUIDES.map(cardMarkup).join('');
+      if (countEl) countEl.textContent = DEMO_GUIDES.length + ' guides nearby';
+    }
+
+    // One delegated listener for every card action — no per-card bindings.
+    listEl.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-act]');
+      if (!btn || !listEl.contains(btn)) return;
+      const idx = parseInt(btn.dataset.idx, 10);
+      if (isNaN(idx) || !DEMO_GUIDES[idx]) return;
+      selectGuide(idx, false);
+      if (btn.dataset.act === 'contact') openContact(idx);
+      else if (btn.dataset.act === 'request') openRequest(idx);
+    });
+
+    // --- location -----------------------------------------------------
+
+    function beginSearch() {
+      if (revealTimer) { clearTimeout(revealTimer); revealTimer = null; }
+      map.classList.remove('live');
+
+      if (!navigator.geolocation) {
+        showBlocked('This browser does not support location sharing, so nearby guides cannot be found.');
+        return;
+      }
+
+      setState('locating');
+      map.classList.add('locating');
+      if (mapEmpty) mapEmpty.hidden = true;
+      if (locBar) locBar.hidden = false;
+      if (locValue) locValue.textContent = 'Locating…';
+      if (locStatus) locStatus.textContent = 'Waiting for permission';
+
+      navigator.geolocation.getCurrentPosition(onLocated, onLocationError, {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 60000
+      });
+    }
+
+    function onLocated(pos) {
+      locationText = formatCoords(pos);
+      if (locValue) locValue.textContent = locationText;
+      if (locStatus) locStatus.textContent = 'Finding guides near you…';
+
+      // Brief discovery beat, then the nearby guides appear.
+      revealTimer = window.setTimeout(function () {
+        revealTimer = null;
+        map.classList.remove('locating');
+        map.classList.add('live');
+        if (locStatus) locStatus.textContent = DEMO_GUIDES.length + ' guides nearby';
+        renderMarkers();
+        renderList();
+        setState('results');
+      }, 1400);
+    }
+
+    function onLocationError(err) {
+      let msg = 'Allow location for this page in your browser, then try again.';
+      if (err && err.code === 2) {
+        msg = 'Your location could not be determined right now. Check that location services are on, then try again.';
+      } else if (err && err.code === 3) {
+        msg = 'Locating took too long. Try again from somewhere with a better signal.';
+      }
+      showBlocked(msg);
+    }
+
+    function showBlocked(message) {
+      map.classList.remove('locating', 'live');
+      map.querySelectorAll('.gx-marker').forEach(function (m) { m.remove(); });
+      if (mapEmpty) mapEmpty.hidden = false;
+      if (locBar) locBar.hidden = true;
+      if (blockedMsg) blockedMsg.textContent = message;
+      setState('blocked');
+    }
+
+    if (findBtn) findBtn.addEventListener('click', beginSearch);
+    if (enableBtn) enableBtn.addEventListener('click', beginSearch);
+
+    // --- modal --------------------------------------------------------
+
+    let lastFocused = null;
+
+    function openModal(html) {
+      lastFocused = document.activeElement;
+      modalBody.innerHTML = html;
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+      const firstField = modalBody.querySelector('textarea, button');
+      if (firstField) firstField.focus();
+    }
+
+    function closeModal() {
+      if (modal.hidden) return;
+      modal.hidden = true;
+      modalBody.innerHTML = '';
+      document.body.style.overflow = '';
+      if (lastFocused && lastFocused.focus) lastFocused.focus();
+      lastFocused = null;
+    }
+
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !modal.hidden) closeModal();
+    });
+
+    function profileMarkup(g) {
+      return '' +
+        '<div class="gx-modal-profile">' +
+          '<div class="gx-avatar">' + esc(g.initials) + '</div>' +
+          '<div>' +
+            '<div class="gx-card-name">' + esc(g.name) +
+              '<span class="gx-badge">Local Guide</span></div>' +
+            '<div class="gx-card-rating"><span class="star">★</span> ' + esc(g.rating) +
+              ' · ' + esc(g.distance) + ' · ' + esc(g.languages) + '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // --- contact ------------------------------------------------------
+
+    function openContact(idx) {
+      const g = DEMO_GUIDES[idx];
+      openModal('' +
+        '<h3 class="gx-modal-title" id="gxModalTitle">Contact ' + esc(g.name) + '</h3>' +
+        '<p class="gx-modal-desc">Send a note before you request them.</p>' +
+        profileMarkup(g) +
+        '<label class="gx-msg-label" for="gxMessage">Message</label>' +
+        '<textarea class="gx-msg-input" id="gxMessage">Hi! I&#39;m interested in exploring this area.</textarea>' +
+        '<div class="gx-modal-actions">' +
+          '<button type="button" class="gx-btn solid" data-modal-act="send" data-idx="' + idx + '">Send</button>' +
+        '</div>' +
+        '<span class="gx-demo-tag">Demo message</span>');
+    }
+
+    function showMessageSent(idx) {
+      const g = DEMO_GUIDES[idx];
+      openModal('' +
+        '<div class="gx-status-mark">✓</div>' +
+        '<h3 class="gx-modal-title" id="gxModalTitle">Message sent</h3>' +
+        '<p class="gx-modal-desc">Saved to this prototype only — no message was delivered to ' +
+          esc(g.name) + ' or any real guide.</p>' +
+        profileMarkup(g) +
+        '<div class="gx-modal-actions two">' +
+          '<button type="button" class="gx-btn ghost" data-modal-act="close">Close</button>' +
+          '<button type="button" class="gx-btn solid" data-modal-act="request" data-idx="' + idx + '">Request Guide</button>' +
+        '</div>' +
+        '<span class="gx-demo-tag">Demo message</span>');
+      showToast('◈', 'Message sent to ' + g.name + ' (demo).');
+    }
+
+    // --- request ------------------------------------------------------
+
+    function openRequest(idx) {
+      const g = DEMO_GUIDES[idx];
+      openModal('' +
+        '<h3 class="gx-modal-title" id="gxModalTitle">Request a Guide</h3>' +
+        '<p class="gx-modal-desc">Your guide will meet you at your current location.</p>' +
+        '<dl class="gx-summary">' +
+          '<div class="gx-summary-row"><dt>Your location</dt><dd>' + esc(locationText) + '</dd></div>' +
+          '<div class="gx-summary-row"><dt>Selected guide</dt><dd>' + esc(g.name) + '</dd></div>' +
+          '<div class="gx-summary-row"><dt>Rating</dt><dd><span class="star">★</span> ' + esc(g.rating) + '</dd></div>' +
+          '<div class="gx-summary-row"><dt>Estimated arrival</dt><dd>' + esc(g.eta) + '</dd></div>' +
+        '</dl>' +
+        '<div class="gx-modal-actions two">' +
+          '<button type="button" class="gx-btn ghost" data-modal-act="close">Cancel</button>' +
+          '<button type="button" class="gx-btn solid" data-modal-act="confirm" data-idx="' + idx + '">Confirm Request</button>' +
+        '</div>' +
+        '<span class="gx-demo-tag">Demo request</span>');
+    }
+
+    function showRequested(idx) {
+      const g = DEMO_GUIDES[idx];
+
+      openModal('' +
+        '<div class="gx-status-mark">✓</div>' +
+        '<h3 class="gx-modal-title" id="gxModalTitle">Guide Requested ✓</h3>' +
+        '<p class="gx-modal-desc">Your guide is on the way.</p>' +
+        '<div class="gx-route">' +
+          '<div class="gx-route-end">' +
+            '<div class="gx-avatar">' + esc(g.initials) + '</div>' +
+            '<span class="gx-route-cap">' + esc(g.name) + '</span>' +
+          '</div>' +
+          '<div class="gx-route-path"></div>' +
+          '<div class="gx-route-end">' +
+            '<div class="gx-route-pin">◉</div>' +
+            '<span class="gx-route-cap">You</span>' +
+          '</div>' +
+        '</div>' +
+        '<dl class="gx-summary">' +
+          '<div class="gx-summary-row"><dt>Estimated arrival</dt><dd>' + esc(g.arrival) + '</dd></div>' +
+          '<div class="gx-summary-row"><dt>Meeting point</dt><dd>' + esc(locationText) + '</dd></div>' +
+        '</dl>' +
+        '<p class="demo-note">Prototype only — no guide has been contacted or dispatched.</p>' +
+        '<div class="gx-modal-actions">' +
+          '<button type="button" class="gx-btn ghost" data-modal-act="close">Close</button>' +
+        '</div>' +
+        '<span class="gx-demo-tag">Demo request</span>');
+
+      // Mirror the state on the map so the screen behind the modal agrees.
+      const marker = map.querySelector('.gx-marker[data-idx="' + idx + '"]');
+      if (marker) {
+        marker.classList.add('selected');
+        const eta = marker.querySelector('.gx-marker-eta');
+        if (eta) eta.textContent = 'On the way';
+      }
+      if (locStatus) locStatus.textContent = g.name + ' is on the way · demo';
+
+      showToast('◈', g.name + ' requested — demo only, no guide was dispatched.');
+    }
+
+    // One delegated listener for every button rendered inside the modal.
+    modalBody.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-modal-act]');
+      if (!btn || !modalBody.contains(btn)) return;
+      const act = btn.dataset.modalAct;
+      const idx = parseInt(btn.dataset.idx, 10);
+
+      if (act === 'close') closeModal();
+      else if (act === 'send' && DEMO_GUIDES[idx]) showMessageSent(idx);
+      else if (act === 'request' && DEMO_GUIDES[idx]) openRequest(idx);
+      else if (act === 'confirm' && DEMO_GUIDES[idx]) showRequested(idx);
+    });
+
+  })();
 
 })();
