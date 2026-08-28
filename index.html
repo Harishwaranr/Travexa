@@ -419,7 +419,7 @@
       <!-- ===== ITINERARY ===== -->
       <section class="screen" id="itinerary">
         <div class="itin-head">
-          <p class="eyebrow">Lisbon · 3 days</p>
+          <p class="eyebrow" id="itinEyebrow">Lisbon · 3 days</p>
           <h2 class="section-title">Your day, in order.</h2>
         </div>
 
@@ -429,27 +429,29 @@
           <button>Day 3</button>
         </div>
 
-        <button class="safety-pill" id="safetyPill">
-          <span class="safety-dot" id="safetyDot"></span>
-          <span class="safety-text"><strong id="safetyText">Alfama — low risk</strong>, festival nearby</span>
-          <span class="safety-live">LIVE</span>
+        <!-- Compact Safety Score Card -->
+        <button class="safety-score-card" id="safetyScoreCard" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="safetyModal" aria-label="View safety score breakdown">
+          <div class="safety-score-left">
+            <span class="safety-shield-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </span>
+            <div class="safety-score-meta">
+              <span class="safety-score-label">Safety Score</span>
+              <div class="safety-score-value-row">
+                <strong class="safety-score-num" id="safetyScoreValue">92/100</strong>
+                <span class="safety-score-divider">·</span>
+                <span class="safety-risk-badge low" id="safetyRiskBadge">Low Risk</span>
+              </div>
+            </div>
+          </div>
+          <div class="safety-score-right">
+            <span class="safety-score-cta">Why is this score <span id="safetyScoreShortVal">92</span>?</span>
+            <span class="safety-score-chevron" aria-hidden="true">›</span>
+          </div>
         </button>
-
-        <div class="safety-breakdown" id="safetyBreak">
-          <div class="safety-row">
-            <span>Recent incident reports</span>
-            <span>2 (last 30 days)</span>
-          </div>
-          <div class="safety-row">
-            <span>Crowd density right now</span>
-            <span>Moderate</span>
-          </div>
-          <div class="safety-row">
-            <span>Nearby events</span>
-            <span>Santo António street festival</span>
-          </div>
-          <p class="safety-note">Sample data for this prototype — production would use live city datasets.</p>
-        </div>
 
         <div class="route">
           <div class="route-line"></div>
@@ -706,6 +708,129 @@
     <div class="gx-modal" role="dialog" aria-modal="true" aria-labelledby="gxModalTitle">
       <button class="gx-modal-close" id="gxModalClose" type="button" aria-label="Close">✕</button>
       <div class="gx-modal-body" id="gxModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Persistent Universal Safety Mini Box (Visible across all pages) -->
+  <aside class="global-safety-widget" id="globalSafetyWidget" aria-label="Real-time area safety analysis">
+    <button class="safety-minibox-btn" id="safetyMiniboxBtn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="safetyModal" aria-label="View live area safety analysis">
+      <span class="minibox-pulse-dot" id="miniboxPulseDot" aria-hidden="true"></span>
+      <span class="minibox-shield-wrap" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="m9 12 2 2 4-4"/>
+        </svg>
+      </span>
+      <div class="minibox-body">
+        <div class="minibox-top-line">
+          <span class="minibox-loc" id="miniboxLocText">Marina Beach, Chennai</span>
+          <span class="minibox-gps-tag" id="miniboxGpsTag">LIVE AREA</span>
+        </div>
+        <div class="minibox-bottom-line">
+          <strong class="minibox-score-num" id="miniboxScoreNum">68/100</strong>
+          <span class="minibox-dot-sep">·</span>
+          <span class="minibox-risk-tag moderate" id="miniboxRiskTag">Moderate Risk</span>
+          <span class="minibox-festival-tag" id="miniboxFestivalTag">Pongal Crowds</span>
+        </div>
+      </div>
+      <span class="minibox-arrow" aria-hidden="true">›</span>
+    </button>
+  </aside>
+
+  <!-- Safety Score Details Modal -->
+  <div class="safety-modal-overlay" id="safetyModal" hidden>
+    <div class="safety-modal" role="dialog" aria-modal="true" aria-labelledby="safetyModalTitle" id="safetyModalDialog">
+      <button class="safety-modal-close" id="safetyModalClose" type="button" aria-label="Close safety score details">✕</button>
+      
+      <div class="safety-modal-header">
+        <p class="eyebrow" id="safetyModalEyebrow">Area Safety &amp; Crowd Intelligence</p>
+        <h3 class="safety-modal-title" id="safetyModalTitle">Location Safety Score</h3>
+        <p class="safety-modal-location" id="safetyModalLocation">Marina Beach, Chennai · Pongal Season</p>
+      </div>
+
+      <!-- Location & GPS Mode Selector -->
+      <div class="safety-loc-toolbar">
+        <div class="safety-gps-status-row">
+          <button class="safety-gps-btn" id="safetyGpsDetectBtn" type="button">
+            <span class="gps-btn-icon">🛰</span>
+            <span id="safetyGpsBtnText">Track Device GPS</span>
+          </button>
+          <span class="safety-gps-indicator" id="safetyGpsIndicatorText">Active: Simulated Area</span>
+        </div>
+
+        <div class="safety-loc-select-wrap">
+          <label for="safetyLocSelect" class="safety-select-label">Switch Area / Festival Event:</label>
+          <select id="safetyLocSelect" class="safety-loc-select" aria-label="Select location to analyze">
+            <option value="marinabeach_chennai" selected>🏖 Marina Beach, Chennai (Pongal Festival · Heavy Crowds)</option>
+            <option value="madurai">🛕 Meenakshi Temple, Madurai (Chithirai Festival Prep)</option>
+            <option value="goa">🌴 North Coastal Belt, Goa (High Season)</option>
+            <option value="jaipur">🏛 Old City / Hawa Mahal, Jaipur</option>
+            <option value="lisbon">🏰 Alfama &amp; Historic Center, Lisbon</option>
+            <option value="kyoto">🏯 Higashiyama &amp; Temple Belt, Kyoto</option>
+            <option value="munnar">🏔 Tea Hills Nature Reserve, Munnar</option>
+            <option value="rishikesh">🌊 Laxman Jhula Riverfront, Rishikesh</option>
+            <option value="kerala">🛶 Alleppey Backwaters, Kerala</option>
+            <option value="france">🥐 Central Districts, Paris</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Score Hero -->
+      <div class="safety-hero-card" id="safetyHeroCard">
+        <div class="safety-hero-score-block">
+          <span class="safety-hero-score" id="safetyHeroScore">68</span>
+          <span class="safety-hero-denom">/ 100</span>
+        </div>
+        <div class="safety-hero-status-block">
+          <span class="safety-hero-badge moderate" id="safetyHeroRiskBadge">MODERATE RISK</span>
+          <span class="safety-hero-subtitle" id="safetyHeroSubtitle">Elevated crowd density during Pongal celebrations</span>
+        </div>
+      </div>
+
+      <!-- Cultural / Tourist Context Advisory -->
+      <div class="safety-tourist-advisory" id="safetyTouristAdvisory">
+        <div class="advisory-icon">💡</div>
+        <div class="advisory-body">
+          <strong class="advisory-title" id="safetyAdvisoryTitle">Local Festival Context for Visitors</strong>
+          <p class="advisory-desc" id="safetyAdvisoryDesc">
+            During the Pongal harvest festival, Marina Beach experiences high pilgrim and family footfall (100,000+ visitors). While celebratory and culturally vibrant, international travelers should anticipate crowded pathways, designated vehicle diversions, and heightened pedestrian density.
+          </p>
+        </div>
+      </div>
+
+      <!-- Explainability Section -->
+      <div class="safety-breakdown-section">
+        <h4 class="safety-section-heading" id="safetyExplainHeading">Why is this score 68/100?</h4>
+        <p class="safety-section-sub">Score computed deterministically starting at baseline 100 with active situational factors:</p>
+        
+        <div class="safety-factors-list" id="safetyFactorsList">
+          <!-- Dynamic factor items populated by app.js -->
+        </div>
+      </div>
+
+      <!-- Overall Assessment -->
+      <div class="safety-assessment-box">
+        <div class="safety-assessment-title">
+          <span class="assessment-icon">✦</span>
+          <span>Overall Assessment</span>
+        </div>
+        <p class="safety-assessment-text" id="safetyAssessmentText">
+          Festival celebrations create heavy beach congestion. Favorable daytime timing and dedicated tourist police deployment provide safe exploration if you follow marked lanes.
+        </p>
+      </div>
+
+      <!-- Prototype Notice -->
+      <div class="safety-disclaimer-box">
+        <div class="disclaimer-icon">⚠</div>
+        <div class="disclaimer-content">
+          <strong>Prototype Data Notice</strong>
+          <p>Safety scores are computed from prototype datasets and simulated area telemetry. Do not use as real-time emergency advice. Always obey local authorities.</p>
+        </div>
+      </div>
+
+      <div class="safety-modal-footer">
+        <button type="button" class="btn-primary full-width" id="safetyModalDoneBtn">Close</button>
+      </div>
     </div>
   </div>
 

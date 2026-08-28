@@ -105,6 +105,16 @@
 
     clearErrorState();
 
+    // Determine target destination
+    let targetDest = 'Lisbon';
+    const destChip = document.querySelector('.chip-row[data-group="dest"] .chip.selected');
+    if (destChip) {
+      targetDest = destChip.textContent.trim();
+    } else if (inputText) {
+      targetDest = inputText.split(/[,\.\n]/)[0].trim().slice(0, 30);
+    }
+    updateSafetyScoreUI(targetDest);
+
     // Show blob loader
     if (blobLoader) {
       blobLoader.classList.add('active');
@@ -209,6 +219,7 @@
   renderGrid('intlGrid', intlSpots);
 
   function selectDestination(name) {
+    updateSafetyScoreUI(name);
     if (blobLoader) {
       blobLoader.classList.add('active');
       if (blobLoadingTitle) blobLoadingTitle.textContent = 'Building ' + name + ' Itinerary…';
@@ -256,36 +267,724 @@
   });
 
   // ===========================================
-  // Safety Pill + Breakdown
+  // ===========================================
+  // TRAVEXA SAFETY SCORE ENGINE & MODULE
+  // Modular architecture:
+  // Data (mockSafetyData) -> Engine (calculateSafetyScore) -> UI (Card & Modal)
   // ===========================================
 
-  const safetyPill  = document.getElementById('safetyPill');
-  const safetyBreak = document.getElementById('safetyBreak');
-  safetyPill.addEventListener('click', () => safetyBreak.classList.toggle('open'));
+  const mockSafetyData = {
+    marinabeach_chennai: {
+      locationName: 'Marina Beach, Chennai',
+      area: 'Promenade & Coastal Belt',
+      incidents: 'Low',
+      incidentDesc: 'Enhanced coastal police patrol and high-visibility assistance booths stationed along the beachfront',
+      crowdLevel: 'Very High',
+      crowdDesc: 'Major festival gathering for Pongal celebrations with heavy pedestrian traffic across the promenade',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime festival hours with peak family and pilgrim visits',
+      weather: { condition: 'Sunny & Warm', severity: 'Normal' },
+      weatherDesc: 'Warm coastal weather (31°C); hydration and sun protection recommended',
+      emergencyServices: { policeDistanceKm: 0.5, hospitalDistanceKm: 1.8 },
+      festival: {
+        active: true,
+        name: 'Pongal Harvest Festival',
+        startDate: '2026-01-14',
+        endDate: '2026-01-18',
+        expectedCrowd: '150,000+',
+        crowdRisk: 'High'
+      },
+      festivalDesc: 'Statewide harvest celebration; heavy pedestrian volume and traffic diversions active around beach entry points',
+      touristAdvisory: 'During Pongal, Marina Beach experiences peak crowds of 100,000+ visitors. While celebratory, colorful, and culturally rich, foreign travelers should expect crowded walkways, vehicle diversions, and keep personal belongings close.',
+      assessment: 'Festival celebrations create very high beach crowds. Favorable daytime light and dedicated tourist police deployment provide safe exploration if you follow marked pedestrian lanes.'
+    },
+    lisbon: {
+      locationName: 'Lisbon',
+      area: 'Alfama & Historic Center',
+      incidents: 'Low',
+      incidentDesc: 'Minimal recent incidents reported in this tourist district',
+      crowdLevel: 'Low',
+      crowdDesc: 'Moderate pedestrian flow, no major crowd congestion',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime window with high street visibility and active transit',
+      weather: { condition: 'Partly Cloudy', severity: 'Normal' },
+      weatherDesc: 'Mild temperature, no severe weather alerts active',
+      emergencyServices: { policeDistanceKm: 1.2, hospitalDistanceKm: 1.4 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'No major crowd events currently affecting this zone',
+      touristAdvisory: 'Historic district with cobbled alleys and scenic miradouros. Keep standard awareness on vintage trams.',
+      assessment: 'Current prototype data indicates a low overall risk level for this destination. Favorable daytime timing and nearby emergency infrastructure support safe exploration.'
+    },
+    madurai: {
+      locationName: 'Madurai',
+      area: 'Meenakshi Temple & Heritage Quarter',
+      incidents: 'Low',
+      incidentDesc: 'Active tourist security patrols and pilgrim assistance booths',
+      crowdLevel: 'Moderate',
+      crowdDesc: 'Steady temple footfall during daytime hours',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Active commercial and heritage visiting hours',
+      weather: { condition: 'Clear & Sunny', severity: 'Normal' },
+      weatherDesc: 'Warm daylight conditions, standard hydration advised',
+      emergencyServices: { policeDistanceKm: 0.8, hospitalDistanceKm: 1.1 },
+      festival: {
+        active: true,
+        name: 'Chithirai Cultural Festival Prep',
+        startDate: '2026-04-10',
+        endDate: '2026-04-22',
+        expectedCrowd: '50,000+',
+        crowdRisk: 'Moderate'
+      },
+      festivalDesc: 'Designated festival pedestrian corridors and marshals deployed',
+      touristAdvisory: 'Historic temple complex with dress code guidelines (shoulders and knees covered). Dedicated footwear deposit counters are available at each tower entrance.',
+      assessment: 'Current prototype data indicates a safe heritage and pilgrimage district with rapid emergency assistance reachable in under 1.2 km.'
+    },
+    goa: {
+      locationName: 'Goa',
+      area: 'North Coastal Promenades',
+      incidents: 'Low',
+      incidentDesc: 'Dedicated coastal police booths stationed along beach routes',
+      crowdLevel: 'Moderate',
+      crowdDesc: 'Moderate seasonal visitor presence near shorelines',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Standard recreation daylight window',
+      weather: { condition: 'Sunny & Breezy', severity: 'Normal' },
+      weatherDesc: 'Favorable coastal conditions, patrolled swim zones active',
+      emergencyServices: { policeDistanceKm: 1.5, hospitalDistanceKm: 3.2 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'No large-scale gatherings or road closures today',
+      touristAdvisory: 'Swim only between red-and-yellow flags where lifeguards are stationed. Certified taxi counters are available at major beach points.',
+      assessment: 'Prototype data reflects a safe, well-monitored leisure destination with accessible local medical clinics.'
+    },
+    jaipur: {
+      locationName: 'Jaipur',
+      area: 'Old City & Hawa Mahal Corridor',
+      incidents: 'Low',
+      incidentDesc: 'Tourist assistance police booths active across the heritage zone',
+      crowdLevel: 'Moderate',
+      crowdDesc: 'Standard bazaar and fort visitation traffic',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime visiting hours for state monuments',
+      weather: { condition: 'Sunny', severity: 'Normal' },
+      weatherDesc: 'Pleasant daytime temperatures, zero adverse weather warnings',
+      emergencyServices: { policeDistanceKm: 0.9, hospitalDistanceKm: 1.8 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'Normal traffic patterns, no procession delays reported',
+      touristAdvisory: 'Government-approved guides display official RTDC badges. Composite heritage monument tickets save entry queuing time.',
+      assessment: 'Heritage zone demonstrates favorable safety metrics with emergency facilities reachable within 2 km.'
+    },
+    kyoto: {
+      locationName: 'Kyoto',
+      area: 'Higashiyama & Temple Belt',
+      incidents: 'Low',
+      incidentDesc: 'Extremely low regional incident rate',
+      crowdLevel: 'Low',
+      crowdDesc: 'Managed pedestrian flow with quiet temple lanes',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Optimal daytime sightseeing window',
+      weather: { condition: 'Fair', severity: 'Normal' },
+      weatherDesc: 'Clear visibility and comfortable climate',
+      emergencyServices: { policeDistanceKm: 0.6, hospitalDistanceKm: 1.5 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'No seasonal festival congestion',
+      touristAdvisory: 'Photography is restricted in certain historic residential alleyways. Public transit passes (IC cards) work seamlessly across buses and trains.',
+      assessment: 'Prototype telemetry reflects an exceptionally secure urban environment supported by rapid-response infrastructure.'
+    },
+    munnar: {
+      locationName: 'Munnar',
+      area: 'Tea Hills & Nature Reserve',
+      incidents: 'Low',
+      incidentDesc: 'Forestry and highway patrol units present on principal routes',
+      crowdLevel: 'Low',
+      crowdDesc: 'Spaced plantation trails with peaceful atmosphere',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime daylight recommended for mountain driving',
+      weather: { condition: 'Cool & Misty', severity: 'Normal' },
+      weatherDesc: 'Mild mountain mist, clear road visibility',
+      emergencyServices: { policeDistanceKm: 2.4, hospitalDistanceKm: 4.1 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'No major hill gathering active',
+      touristAdvisory: 'Mountain roads have sharp curves; avoid driving after heavy dusk mist. Hire certified local eco-guides for plantation treks.',
+      assessment: 'Safe eco-tourism district; travel during daylight hours is recommended for mountain serenity.'
+    },
+    rishikesh: {
+      locationName: 'Rishikesh',
+      area: 'Laxman Jhula & Riverfront',
+      incidents: 'Low',
+      incidentDesc: 'Riverfront safety marshals and life jacket enforcement stations',
+      crowdLevel: 'Low',
+      crowdDesc: 'Moderate ashram and meditation center attendance',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime riverside exploration period',
+      weather: { condition: 'Clear', severity: 'Normal' },
+      weatherDesc: 'Pleasant weather and stable river currents',
+      emergencyServices: { policeDistanceKm: 1.1, hospitalDistanceKm: 2.0 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'Standard evening Aarti gatherings only, within safe capacity',
+      touristAdvisory: 'Only book white-water rafting with operators licensed by the Uttarakhand Tourism Board. Wear life jackets near ghats.',
+      assessment: 'Calm pilgrimage and wellness environment with well-regulated river activities and nearby clinics.'
+    },
+    kerala: {
+      locationName: 'Kerala Backwaters',
+      area: 'Alleppey Lagoon Circuit',
+      incidents: 'Low',
+      incidentDesc: 'Certified houseboat safety inspections and registered vessel logs',
+      crowdLevel: 'Low',
+      crowdDesc: 'Relaxed waterway traffic',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daylight cruising hours',
+      weather: { condition: 'Tropical Breeze', severity: 'Normal' },
+      weatherDesc: 'Calm backwater conditions',
+      emergencyServices: { policeDistanceKm: 1.8, hospitalDistanceKm: 2.6 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'Regular boat traffic with water ambulance coverage',
+      touristAdvisory: 'Verify that your houseboat holds an official green or gold certification badge from the Port Officer before boarding.',
+      assessment: 'Low risk leisure environment with compliant marine safety guidelines and accessible harbor medics.'
+    },
+    france: {
+      locationName: 'France',
+      area: 'Parisian Central Districts',
+      incidents: 'Low',
+      incidentDesc: 'High municipal police visibility near major landmarks',
+      crowdLevel: 'Moderate',
+      crowdDesc: 'Brisk museum and boulevard pedestrian movement',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Daytime museum and dining hours',
+      weather: { condition: 'Partly Cloudy', severity: 'Normal' },
+      weatherDesc: 'Mild urban conditions',
+      emergencyServices: { policeDistanceKm: 0.7, hospitalDistanceKm: 1.1 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'Standard public square operations',
+      touristAdvisory: 'Keep bags closed and secured in crowded metro stations (Châtelet, Gare du Nord). Book monument entry slots online in advance.',
+      assessment: 'Safe, walkable metropolis with rapid emergency connectivity and extensive hospital services.'
+    }
+  };
 
-  const safetyStatuses = [
-    { text: 'Alfama — low risk',      dot: 'var(--ok)'  },
-    { text: 'Alfama — moderate crowd', dot: 'var(--mid)' },
-    { text: 'Alfama — low risk',      dot: 'var(--ok)'  }
-  ];
-  let safetyIdx = 0;
-  let safetyTimer = null;
+  function getSafetyData(destinationName) {
+    if (!destinationName) return mockSafetyData.marinabeach_chennai;
+    const cleanKey = destinationName.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  function startSafetyCycle() {
-    if (safetyTimer) return;
-    safetyTimer = setInterval(() => {
-      safetyIdx = (safetyIdx + 1) % safetyStatuses.length;
-      const textEl = document.getElementById('safetyText');
-      const dotEl  = document.getElementById('safetyDot');
+    for (const key in mockSafetyData) {
+      const cleanTarget = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (cleanKey.includes(cleanTarget) || cleanTarget.includes(cleanKey)) {
+        return mockSafetyData[key];
+      }
+    }
 
-      textEl.style.opacity = '0';
-      setTimeout(() => {
-        textEl.textContent     = safetyStatuses[safetyIdx].text;
-        dotEl.style.background = safetyStatuses[safetyIdx].dot;
-        textEl.style.opacity   = '1';
-      }, 300);
-    }, 8000);
+    // Default synthesized fallback for arbitrary destinations
+    return {
+      locationName: destinationName,
+      area: 'Central District & Surrounds',
+      incidents: 'Low',
+      incidentDesc: 'Standard monitored municipal tourist zone',
+      crowdLevel: 'Low',
+      crowdDesc: 'Normal pedestrian density in primary transit corridors',
+      timeOfDay: 'Daytime',
+      timeDesc: 'Standard daytime activity period',
+      weather: { condition: 'Favorable', severity: 'Normal' },
+      weatherDesc: 'No severe weather alerts currently registered',
+      emergencyServices: { policeDistanceKm: 1.4, hospitalDistanceKm: 2.0 },
+      festival: {
+        active: false,
+        name: null,
+        startDate: null,
+        endDate: null,
+        expectedCrowd: null,
+        crowdRisk: 'Low'
+      },
+      festivalDesc: 'No major crowd events currently detected in prototype data',
+      touristAdvisory: 'Standard international visitor precautions apply. Keep local emergency numbers (112) handy.',
+      assessment: 'Current prototype data indicates a low overall risk level for this destination.'
+    };
   }
+
+  function calculateSafetyScore(data) {
+    let score = 100; // Base score
+    const factors = [];
+
+    // 1. Incident Activity
+    let incidentImpact = 0;
+    if (data.incidents === 'Moderate') incidentImpact = -15;
+    else if (data.incidents === 'High') incidentImpact = -25;
+    score += incidentImpact;
+    factors.push({
+      id: 'incidents',
+      name: 'Incident Activity',
+      icon: '🛡',
+      value: data.incidents || 'Low',
+      impact: incidentImpact,
+      desc: data.incidentDesc || 'Recent incident reports in monitored zone'
+    });
+
+    // 2. Crowd Level
+    let crowdImpact = 0;
+    if (data.crowdLevel === 'Moderate') crowdImpact = -5;
+    else if (data.crowdLevel === 'High') crowdImpact = -10;
+    else if (data.crowdLevel === 'Very High') crowdImpact = -15;
+    score += crowdImpact;
+    factors.push({
+      id: 'crowd',
+      name: 'Crowd Level',
+      icon: '👥',
+      value: data.crowdLevel || 'Low',
+      impact: crowdImpact,
+      desc: data.crowdDesc || 'Pedestrian density and crowd flow measurement'
+    });
+
+    // 3. Time of Day
+    let timeImpact = 0;
+    if (data.timeOfDay === 'Evening') timeImpact = -5;
+    else if (data.timeOfDay === 'Night') timeImpact = -10;
+    score += timeImpact;
+    factors.push({
+      id: 'time',
+      name: 'Time of Day',
+      icon: '🕐',
+      value: data.timeOfDay || 'Daytime',
+      impact: timeImpact,
+      desc: data.timeDesc || 'Daylight and active visibility window'
+    });
+
+    // 4. Weather Condition
+    let weatherImpact = 0;
+    const weatherCond = (data.weather && data.weather.condition) ? data.weather.condition : 'Partly Cloudy';
+    const weatherSeverity = (data.weather && data.weather.severity) ? data.weather.severity : 'Normal';
+    if (weatherSeverity === 'Moderate') weatherImpact = -5;
+    else if (weatherSeverity === 'Severe') weatherImpact = -10;
+    score += weatherImpact;
+    factors.push({
+      id: 'weather',
+      name: 'Weather',
+      icon: '🌤',
+      value: weatherCond,
+      impact: weatherImpact,
+      desc: data.weatherDesc || 'Atmospheric conditions and travel advisories'
+    });
+
+    // 5. Nearby Police
+    let policeImpact = 0;
+    const policeDist = data.emergencyServices?.policeDistanceKm || 1.2;
+    if (policeDist <= 2.0) policeImpact = +5;
+    else if (policeDist <= 5.0) policeImpact = +2;
+    score += policeImpact;
+    factors.push({
+      id: 'police',
+      name: 'Nearby Police',
+      icon: '👮',
+      value: `${policeDist.toFixed(1)} km`,
+      impact: policeImpact,
+      desc: policeDist <= 2.0 ? 'Emergency dispatch station within 2 km' : 'Municipal police coverage available'
+    });
+
+    // 6. Nearby Hospital
+    let hospitalImpact = 0;
+    const hospitalDist = data.emergencyServices?.hospitalDistanceKm || 1.4;
+    if (hospitalDist <= 2.0) hospitalImpact = +5;
+    else if (hospitalDist <= 5.0) hospitalImpact = +2;
+    score += hospitalImpact;
+    factors.push({
+      id: 'hospital',
+      name: 'Nearby Hospital',
+      icon: '🏥',
+      value: `${hospitalDist.toFixed(1)} km`,
+      impact: hospitalImpact,
+      desc: hospitalDist <= 2.0 ? 'Medical support facility within 2 km' : 'Regional medical assistance available'
+    });
+
+    // 7. Festival / Crowd Event
+    let festivalImpact = 0;
+    let festivalVal = 'None active';
+    if (data.festival && data.festival.active) {
+      festivalVal = data.festival.name || 'Local event active';
+      if (data.festival.crowdRisk === 'High') festivalImpact = -15;
+      else if (data.festival.crowdRisk === 'Moderate') festivalImpact = -5;
+    }
+    score += festivalImpact;
+    factors.push({
+      id: 'festival',
+      name: 'Festival / Event',
+      icon: '🎪',
+      value: festivalVal,
+      impact: festivalImpact,
+      desc: data.festivalDesc || 'Scheduled celebrations or crowd events in this location'
+    });
+
+    // Clamp score between 0 and 100
+    const clampedScore = Math.max(0, Math.min(100, score));
+
+    // Determine risk level category
+    let riskLevel = 'Low Risk';
+    let riskClass = 'low';
+    let summaryText = 'Current prototype data indicates a low overall risk level for this destination.';
+
+    if (clampedScore >= 81) {
+      riskLevel = 'Low Risk';
+      riskClass = 'low';
+      summaryText = 'Current prototype data indicates a low overall risk level for this destination.';
+    } else if (clampedScore >= 61) {
+      riskLevel = 'Moderate Risk';
+      riskClass = 'moderate';
+      summaryText = 'Current prototype data indicates moderate risk. Standard precautions are advised.';
+    } else if (clampedScore >= 41) {
+      riskLevel = 'High Risk';
+      riskClass = 'high';
+      summaryText = 'Current prototype data indicates elevated risk factors in this zone. Stay alert and follow local guidance.';
+    } else {
+      riskLevel = 'Critical Risk';
+      riskClass = 'critical';
+      summaryText = 'Current prototype data indicates critical risk factors. Exercise heightened caution.';
+    }
+
+    return {
+      score: clampedScore,
+      baseScore: 100,
+      riskLevel: riskLevel,
+      riskClass: riskClass,
+      factors: factors,
+      assessment: data.assessment || summaryText,
+      touristAdvisory: data.touristAdvisory || 'Standard precautions apply for visitors in this zone.',
+      data: data
+    };
+  }
+
+  let currentDestinationName = 'marinabeach_chennai';
+  let isGpsActive = false;
+  let lastFocusedElement = null;
+
+  function updateSafetyScoreUI(destinationName, gpsCoordText) {
+    currentDestinationName = destinationName || 'marinabeach_chennai';
+    const safetyData = getSafetyData(currentDestinationName);
+    const scoreResult = calculateSafetyScore(safetyData);
+
+    // 1. Update Itinerary Eyebrow if present
+    const itinEyebrow = document.getElementById('itinEyebrow');
+    if (itinEyebrow) {
+      itinEyebrow.textContent = `${safetyData.locationName} · 3 days`;
+    }
+
+    // 2. Update Itinerary Compact Card
+    const valueEl = document.getElementById('safetyScoreValue');
+    const badgeEl = document.getElementById('safetyRiskBadge');
+    const shortValEl = document.getElementById('safetyScoreShortVal');
+
+    if (valueEl) valueEl.textContent = `${scoreResult.score}/100`;
+    if (shortValEl) shortValEl.textContent = `${scoreResult.score}`;
+    if (badgeEl) {
+      badgeEl.textContent = scoreResult.riskLevel;
+      badgeEl.className = `safety-risk-badge ${scoreResult.riskClass}`;
+    }
+
+    // 3. Update Persistent Universal Mini Box (All pages)
+    const miniLoc = document.getElementById('miniboxLocText');
+    const miniScore = document.getElementById('miniboxScoreNum');
+    const miniRisk = document.getElementById('miniboxRiskTag');
+    const miniFest = document.getElementById('miniboxFestivalTag');
+    const miniGps = document.getElementById('miniboxGpsTag');
+    const miniDot = document.getElementById('miniboxPulseDot');
+
+    if (miniLoc) miniLoc.textContent = safetyData.locationName;
+    if (miniScore) miniScore.textContent = `${scoreResult.score}/100`;
+    if (miniRisk) {
+      miniRisk.textContent = scoreResult.riskLevel;
+      miniRisk.className = `minibox-risk-tag ${scoreResult.riskClass}`;
+    }
+    if (miniDot) {
+      miniDot.className = `minibox-pulse-dot ${scoreResult.riskClass}`;
+    }
+    if (miniFest) {
+      if (safetyData.festival && safetyData.festival.active) {
+        miniFest.style.display = 'inline-block';
+        miniFest.textContent = safetyData.festival.name ? safetyData.festival.name.split(' ')[0] + ' Event' : 'Festival Alert';
+      } else {
+        miniFest.style.display = 'none';
+      }
+    }
+    if (miniGps) {
+      miniGps.textContent = gpsCoordText ? 'GPS LIVE' : 'LIVE AREA';
+    }
+
+    // 4. Update Select dropdown if open
+    const locSelect = document.getElementById('safetyLocSelect');
+    if (locSelect) {
+      for (let i = 0; i < locSelect.options.length; i++) {
+        if (locSelect.options[i].value === currentDestinationName) {
+          locSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  function renderSafetyModal() {
+    const safetyData = getSafetyData(currentDestinationName);
+    const scoreResult = calculateSafetyScore(safetyData);
+
+    const titleEl = document.getElementById('safetyModalTitle');
+    const locEl = document.getElementById('safetyModalLocation');
+    const heroScoreEl = document.getElementById('safetyHeroScore');
+    const heroBadgeEl = document.getElementById('safetyHeroRiskBadge');
+    const heroSubEl = document.getElementById('safetyHeroSubtitle');
+    const headingEl = document.getElementById('safetyExplainHeading');
+    const listEl = document.getElementById('safetyFactorsList');
+    const assessEl = document.getElementById('safetyAssessmentText');
+    const advisoryDescEl = document.getElementById('safetyAdvisoryDesc');
+    const advisoryTitleEl = document.getElementById('safetyAdvisoryTitle');
+    const gpsIndicatorEl = document.getElementById('safetyGpsIndicatorText');
+
+    if (titleEl) titleEl.textContent = `${safetyData.locationName} Safety Score`;
+    if (locEl) locEl.textContent = `${safetyData.locationName} · ${safetyData.area}`;
+    if (heroScoreEl) heroScoreEl.textContent = scoreResult.score;
+    if (heroBadgeEl) {
+      heroBadgeEl.textContent = scoreResult.riskLevel.toUpperCase();
+      heroBadgeEl.className = `safety-hero-badge ${scoreResult.riskClass}`;
+    }
+    if (heroSubEl) {
+      heroSubEl.textContent = safetyData.festival && safetyData.festival.active
+        ? `Active ${safetyData.festival.name} festival conditions in this zone`
+        : (scoreResult.score >= 81 ? 'Favorable travel conditions based on prototype telemetry' : 'Active risk factors noted in current area parameters');
+    }
+    if (headingEl) {
+      headingEl.textContent = `Why is this score ${scoreResult.score}/100?`;
+    }
+    if (assessEl) {
+      assessEl.textContent = scoreResult.assessment;
+    }
+    if (advisoryTitleEl) {
+      advisoryTitleEl.textContent = safetyData.festival && safetyData.festival.active
+        ? `${safetyData.festival.name} — Visitor Guidance`
+        : `Traveler Insights for ${safetyData.locationName}`;
+    }
+    if (advisoryDescEl) {
+      advisoryDescEl.textContent = scoreResult.touristAdvisory;
+    }
+    if (gpsIndicatorEl) {
+      gpsIndicatorEl.textContent = isGpsActive ? 'Active: Device GPS Tracking' : 'Active: Selected / Simulated Area';
+    }
+
+    if (listEl) {
+      listEl.innerHTML = scoreResult.factors.map(factor => {
+        let impactClass = 'neutral';
+        let impactText = 'Impact: 0';
+        if (factor.impact > 0) {
+          impactClass = 'positive';
+          impactText = `Impact: +${factor.impact}`;
+        } else if (factor.impact < 0) {
+          impactClass = 'penalty';
+          impactText = `Impact: ${factor.impact}`;
+        }
+
+        return `
+          <div class="safety-factor-item">
+            <div class="factor-icon-wrap" aria-hidden="true">${factor.icon}</div>
+            <div class="factor-main">
+              <div class="factor-header-row">
+                <span class="factor-name">${factor.name}</span>
+                <span class="factor-condition">${factor.value}</span>
+              </div>
+              <p class="factor-desc">${factor.desc}</p>
+            </div>
+            <span class="factor-impact-badge ${impactClass}">${impactText}</span>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  function openSafetyModal() {
+    const modal = document.getElementById('safetyModal');
+    if (!modal) return;
+    lastFocusedElement = document.activeElement;
+
+    renderSafetyModal();
+
+    modal.hidden = false;
+    document.body.style.overflow = 'hidden';
+
+    const cardBtn = document.getElementById('safetyScoreCard');
+    if (cardBtn) cardBtn.setAttribute('aria-expanded', 'true');
+    const miniBtn = document.getElementById('safetyMiniboxBtn');
+    if (miniBtn) miniBtn.setAttribute('aria-expanded', 'true');
+
+    // Focus close button
+    const closeBtn = document.getElementById('safetyModalClose');
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function closeSafetyModal() {
+    const modal = document.getElementById('safetyModal');
+    if (!modal || modal.hidden) return;
+
+    modal.hidden = true;
+    document.body.style.overflow = '';
+
+    const cardBtn = document.getElementById('safetyScoreCard');
+    if (cardBtn) cardBtn.setAttribute('aria-expanded', 'false');
+    const miniBtn = document.getElementById('safetyMiniboxBtn');
+    if (miniBtn) miniBtn.setAttribute('aria-expanded', 'false');
+
+    if (lastFocusedElement && lastFocusedElement.focus) {
+      lastFocusedElement.focus();
+    }
+    lastFocusedElement = null;
+  }
+
+  // Device GPS Location Tracking
+  function initDeviceGps() {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        isGpsActive = true;
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const coordStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}`;
+        
+        // Auto-match nearest Indian / International region or preserve active spot
+        if (lat >= 8 && lat <= 20 && lon >= 75 && lon <= 85) {
+          // South India region -> default to Marina Beach / Chennai or Madurai
+          updateSafetyScoreUI('marinabeach_chennai', coordStr);
+        } else {
+          updateSafetyScoreUI(currentDestinationName, coordStr);
+        }
+
+        const gpsBtnText = document.getElementById('safetyGpsBtnText');
+        if (gpsBtnText) gpsBtnText.textContent = `GPS Active (${coordStr})`;
+      },
+      (err) => {
+        isGpsActive = false;
+        // Keep default selected simulated area
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }
+
+  // Safety Score Event Listeners
+  const safetyCardBtn = document.getElementById('safetyScoreCard');
+  if (safetyCardBtn) {
+    safetyCardBtn.addEventListener('click', openSafetyModal);
+  }
+
+  const safetyMiniboxBtn = document.getElementById('safetyMiniboxBtn');
+  if (safetyMiniboxBtn) {
+    safetyMiniboxBtn.addEventListener('click', openSafetyModal);
+  }
+
+  const safetyLocSelect = document.getElementById('safetyLocSelect');
+  if (safetyLocSelect) {
+    safetyLocSelect.addEventListener('change', (e) => {
+      isGpsActive = false;
+      updateSafetyScoreUI(e.target.value);
+      renderSafetyModal();
+      showToast('🛡', `Analyzing safety parameters for ${getSafetyData(e.target.value).locationName}`);
+    });
+  }
+
+  const safetyGpsDetectBtn = document.getElementById('safetyGpsDetectBtn');
+  if (safetyGpsDetectBtn) {
+    safetyGpsDetectBtn.addEventListener('click', () => {
+      if (navigator.geolocation) {
+        showToast('🛰', 'Acquiring real-time device location…');
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            isGpsActive = true;
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const coordStr = `${lat.toFixed(2)}°, ${lon.toFixed(2)}°`;
+            updateSafetyScoreUI(currentDestinationName, coordStr);
+            renderSafetyModal();
+            showToast('✓', `Device location locked: ${coordStr}`);
+          },
+          (err) => {
+            showToast('⚠', 'GPS access not granted. Using simulated location.');
+          }
+        );
+      }
+    });
+  }
+
+  const safetyModalCloseBtn = document.getElementById('safetyModalClose');
+  if (safetyModalCloseBtn) {
+    safetyModalCloseBtn.addEventListener('click', closeSafetyModal);
+  }
+
+  const safetyModalDoneBtn = document.getElementById('safetyModalDoneBtn');
+  if (safetyModalDoneBtn) {
+    safetyModalDoneBtn.addEventListener('click', closeSafetyModal);
+  }
+
+  const safetyModalOverlay = document.getElementById('safetyModal');
+  if (safetyModalOverlay) {
+    safetyModalOverlay.addEventListener('click', (e) => {
+      if (e.target === safetyModalOverlay) {
+        closeSafetyModal();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const safetyModal = document.getElementById('safetyModal');
+      if (safetyModal && !safetyModal.hidden) {
+        closeSafetyModal();
+      }
+    }
+  });
 
   // ===========================================
   // Toast Notification System
@@ -320,7 +1019,6 @@
   let liveDemoStarted = false;
 
   function startLiveDemo() {
-    startSafetyCycle();
     if (liveDemoStarted) return;
     liveDemoStarted = true;
 
@@ -1150,6 +1848,10 @@
       else if (act === 'request' && DEMO_GUIDES[idx]) openRequest(idx);
       else if (act === 'confirm' && DEMO_GUIDES[idx]) showRequested(idx);
     });
+
+    // Initialize default safety score state and device GPS tracking
+    updateSafetyScoreUI('marinabeach_chennai');
+    initDeviceGps();
 
   })();
 
