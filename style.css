@@ -417,7 +417,7 @@ img { display: block; max-width: 100%; }
    ============================================ */
 .hero-stage {
   position: relative;
-  height: 380vh;                 /* scroll runway; JS re-sizes this from the video duration */
+  height: 500vh;                 /* 5 narrative stages; JS re-sizes from the video duration */
   --p: 0;                        /* 0 → 1, written by JS every frame */
 }
 
@@ -510,14 +510,37 @@ img { display: block; max-width: 100%; }
   width: 100%;
   max-width: var(--wrap);
   margin: 0 auto;
-  padding: 0 calc(var(--gutter) + (1 - var(--p)) * 3vw);
+  padding: 0 calc(var(--gutter) + 3vw);
   color: #fff;
+  display: grid;
+  min-height: 60vh;
+  /* All slides + CTA share the same grid cell for stacking */
+}
+
+.hero-slide {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  opacity: 0;
+  will-change: opacity, transform;
+  pointer-events: none;
+  transition: none; /* JS drives every frame */
+}
+.hero-slide[data-slide="0"] { opacity: 1; pointer-events: auto; }
+
+/* CTA button stays visible throughout all slides */
+.hero-cta-wrap {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: start;
+  z-index: 3;
+  padding-bottom: 10vh;
 }
 
 .hero .eyebrow {
   color: rgba(255, 255, 255, 0.72);
-  opacity: calc(1 - var(--p) * 1.6);
-  transform: translate3d(0, calc(var(--p) * -20px), 0);
 }
 
 .hero-title {
@@ -533,10 +556,7 @@ img { display: block; max-width: 100%; }
 
 .hero-line {
   display: block;
-  will-change: transform;
 }
-.hero-line.l1 { transform: translate3d(calc(var(--p) * -3vw), calc(var(--p) * -34px), 0); }
-.hero-line.l2 { transform: translate3d(calc(var(--p) *  3vw), calc(var(--p) *  22px), 0); }
 
 .highlight {
   font-style: italic;
@@ -563,8 +583,6 @@ img { display: block; max-width: 100%; }
   font-size: 16.5px;
   line-height: 1.65;
   color: rgba(255, 255, 255, 0.86);
-  opacity: calc(1 - var(--p) * 1.4);
-  transform: translate3d(0, calc(var(--p) * -14px), 0);
 }
 
 .hero-cta {
@@ -584,7 +602,6 @@ img { display: block; max-width: 100%; }
   cursor: pointer;
   box-shadow: var(--sh-md);
   transition: transform 0.36s var(--ease-out), box-shadow 0.36s var(--ease-out);
-  opacity: calc(1 - var(--p) * 1.4);
 }
 .hero-cta:hover { transform: translateY(-2px); box-shadow: var(--sh-lg); }
 .hero-cta .arrow { transition: transform 0.36s var(--ease-out); }

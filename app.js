@@ -358,6 +358,7 @@
     let targets = [];
     let ticking = false;
     let vh = window.innerHeight;
+    let heroStoryStage = 0;   // current narrative stage (0-4), read by updateStoryProgress
 
     const header    = document.getElementById('siteHeader');
     const heroStage = document.getElementById('heroStage');
@@ -384,10 +385,9 @@
     let scrubRaf   = null;
 
     function setStageHeight() {
-      // Enough runway to walk the whole clip without making the page huge:
-      // roughly 28vh of scrolling per second of video.
+      // 5 narrative stages need enough runway. Minimum 500vh.
       if (!videoDur) return;
-      const vhUnits = Math.round(Math.min(600, Math.max(260, 100 + videoDur * 28)));
+      const vhUnits = Math.round(Math.min(700, Math.max(500, 100 + videoDur * 28)));
       heroStage.style.height = vhUnits + 'vh';
     }
 
@@ -509,15 +509,13 @@
 
         heroStage.style.setProperty('--p', p.toFixed(4));
 
-        // Scroll position -> video position. Down advances it, up reverses it,
-        // and it never moves on its own.
+        // Scroll position -> video position
         if (videoReady) {
           targetTime = p * videoDur;
           kickScrub();
         }
 
-        // Three-way crossfade through the journey, both directions.
-        // Only runs while the video is unavailable — it is the fallback.
+        // Three-way crossfade through still scenes (video fallback)
         if (!videoReady && scenes.length === 3) {
           scenes[0].style.opacity = clamp01(1 - (p - 0.16) / 0.24).toFixed(3);
           scenes[1].style.opacity = Math.min(
@@ -527,9 +525,37 @@
           scenes[2].style.opacity = clamp01((p - 0.58) / 0.24).toFixed(3);
         }
 
-        // Rail marks which stage of the scroll you're in
-        const stage = p < 0.33 ? 0 : p < 0.66 ? 1 : 2;
-        rails.forEach((r, i) => r.classList.toggle('on', i === stage));
+        // --- Hero slide crossfade (5 stages) ---
+        var heroSlides = heroStage.querySelectorAll('.hero-slide');
+        var n = heroSlides.length; // 5
+        if (n > 0) {
+          var seg = 1 / n;       // 0.2
+          var fade = 0.04;       // crossfade half-width
+          for (var si = 0; si < n; si++) {
+            var lo = si * seg;
+            var hi = lo + seg;
+            var a = 1;
+            // Fade in (not for first slide)
+            if (si > 0) {
+              a = Math.min(a, clamp01((p - lo + fade) / (2 * fade)));
+            }
+            // Fade out (not for last slide)
+            if (si < n - 1) {
+              a = Math.min(a, clamp01((hi + fade - p) / (2 * fade)));
+            }
+            heroSlides[si].style.opacity = a.toFixed(3);
+            heroSlides[si].style.transform = 'translate3d(0,' + ((1 - a) * 14).toFixed(1) + 'px,0)';
+            heroSlides[si].style.pointerEvents = a > 0.4 ? 'auto' : 'none';
+          }
+        }
+
+        // Rail marks which of the 5 stages you're in
+        var stage5 = Math.min(4, Math.floor(p * 5));
+        if (p >= 1) stage5 = 4;
+        rails.forEach(function (r, i) { r.classList.toggle('on', i === stage5); });
+
+        // Drive story progress indicator from hero --p
+        heroStoryStage = stage5;
       }
 
       // --- generic reveals ---
@@ -627,7 +653,7 @@
       update();
     }
 
-    return { init: init, refresh: refresh, update: update };
+    return { init: init, refresh: refresh, update: update, getStage: function () { return heroStoryStage; } };
   })();
 
   Scroll.init();
@@ -636,16 +662,15 @@
   // Story Progress Indicator
   // ===========================================
 
-  const storySections = Array.prototype.slice.call(document.querySelectorAll('[data-story-section]'));
-  const storyDots     = Array.prototype.slice.call(document.querySelectorAll('.sp-dot'));
-  const storyNav      = document.getElementById('storyProgress');
-  let currentStory    = 0;
+  const storyDots  = Array.prototype.slice.call(document.querySelectorAll('.sp-dot'));
+  const storyNav   = document.getElementById('storyProgress');
+  let currentStory = -1;
 
   function updateStoryProgress() {
-    if (!storyNav || storySections.length === 0) return;
+    if (!storyNav || storyDots.length === 0) return;
 
     // Show progress only on the home screen
-    const homeActive = document.getElementById('home');
+    var homeActive = document.getElementById('home');
     if (!homeActive || !homeActive.classList.contains('active')) {
       storyNav.style.opacity = '0';
       storyNav.style.pointerEvents = 'none';
@@ -654,22 +679,8 @@
     storyNav.style.opacity = '1';
     storyNav.style.pointerEvents = 'auto';
 
-    // Find which section is most visible (closest center to viewport center)
-    var vh = window.innerHeight;
-    var center = vh * 0.5;
-    var best = 0;
-    var bestDist = Infinity;
-
-    for (var i = 0; i < storySections.length; i++) {
-      var rect = storySections[i].getBoundingClientRect();
-      var mid  = rect.top + rect.height * 0.5;
-      var dist = Math.abs(mid - center);
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
-      }
-    }
-
+    // heroStoryStage is set inside the scroll engine's hero update
+    var best = Scroll.getStage ? Scroll.getStage() : 0;
     if (best !== currentStory) {
       currentStory = best;
       storyDots.forEach(function (dot, idx) {
@@ -678,14 +689,18 @@
     }
   }
 
-  // Click-to-scroll on progress dots
+  // Click-to-scroll on progress dots — scrolls to the right fraction of the hero stage
   storyDots.forEach(function (dot) {
     dot.addEventListener('click', function (e) {
       e.preventDefault();
       var idx = parseInt(dot.dataset.story, 10);
-      if (storySections[idx]) {
-        storySections[idx].scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      var heroStageEl = document.getElementById('heroStage');
+      if (!heroStageEl) return;
+      var stageRect = heroStageEl.getBoundingClientRect();
+      var range = stageRect.height - window.innerHeight;
+      var targetP = (idx + 0.1) / 5; // slightly past the start of each stage
+      var scrollTarget = (window.scrollY || window.pageYOffset) + stageRect.top + range * targetP;
+      window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
     });
   });
 
