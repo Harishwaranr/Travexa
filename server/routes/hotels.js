@@ -1,0 +1,102 @@
+const express = require('express');
+const router = express.Router();
+
+const FSQ_KEY = process.env.FOURSQUARE_API_KEY;
+const FSQ_BASE = 'https://places-api.foursquare.com/places/search';
+const FSQ_VERSION = '2025-06-17';
+
+/**
+ * GET /api/hotels?location=Lisbon&budget=mid&limit=8
+ *
+ * Returns real hotels near the given location from Foursquare.
+ *  - location: city name or "lat,lng"
+ *  - budget:   low | mid | high  (maps to Foursquare price 1-4)
+ *  - limit:    number of results (default 8, max 50)
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { location, budget, limit } = req.query;
+
+    if (!location) {
+      return res.status(400).json({ error: 'Missing "location" parameter' });
+    }
+
+    if (!FSQ_KEY) {
+      return res.status(500).json({ error: 'Foursquare API key not configured' });
+    }
+
+    // Build Foursquare query
+    const params = new URLSearchParams({
+      query: 'hotel',
+      near: location,
+      limit: String(Math.min(parseInt(limit) || 8, 50)),
+      sort: 'RELEVANCE'
+    });
+
+    // Map budget to Foursquare price filter (1=cheap, 4=expensive)
+    if (budget === 'low') { params.append('min_price', '1'); params.append('max_price', '2'); }
+    if (budget === 'mid') { params.append('min_price', '2'); params.append('max_price', '3'); }
+    if (budget === 'high') { params.append('min_price', '3'); params.append('max_price', '4'); }
+
+    const url = `${FSQ_BASE}?${params.toString()}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': 'Bearer ' + FSQ_KEY,
+        'Accept': 'application/json',
+        'X-Places-Api-Version': FSQ_VERSION
+      }
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Foursquare error:', response.status, errText);
+      return res.status(response.status).json({
+        error: 'Hotel search failed',
+        detail: errText
+      });
+    }
+
+    const data = await response.json();
+
+    // Transform Foursquare results into a clean format for the frontend
+    const hotels = (data.results || []).map(place => {
+      // Build photo URL from category icon as fallback
+      let photoUrl = null;
+      if (place.photos && place.photos.length > 0) {
+        const photo = place.photos[0];
+        photoUrl = `${photo.prefix}400x300${photo.suffix}`;
+      } else if (place.categories && place.categories.length > 0) {
+        const icon = place.categories[0].icon;
+        if (icon) photoUrl = `${icon.prefix}120${icon.suffix}`;
+      }
+
+      return {
+        id: place.fsq_place_id || place.fsq_id || null,
+        name: place.name,
+        address: place.location?.formatted_address || place.location?.address || '',
+        city: place.location?.locality || '',
+        rating: place.rating ? (place.rating / 2).toFixed(1) : null,
+        priceLevel: place.price || null,
+        category: place.categories?.[0]?.name || 'Hotel',
+        distance: place.distance || null,
+        photo: photoUrl,
+        phone: place.tel || null,
+        website: place.website || null,
+        email: place.email || null
+      };
+    });
+
+    res.json({
+      location: location,
+      count: hotels.length,
+      hotels: hotels
+    });
+
+  } catch (err) {
+    console.error('Hotel search error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;
