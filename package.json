@@ -4,11 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "node server/index.js",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "db:setup": "node server/db/migrate.js",
+    "db:check": "node -e \"require('dotenv').config();require('./server/lib/db').health().then(h=>console.log(h))\""
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.3.0",
+    "pg": "^8.23.0",
+    "razorpay": "^2.9.8"
   }
 }

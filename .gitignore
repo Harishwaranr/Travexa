@@ -3,3 +3,6 @@ node_modules/
 .env.local
 dist/
 .vercel/
+
+# Accidental nested clone of this project — kept on disk, never committed.
+Travexa/

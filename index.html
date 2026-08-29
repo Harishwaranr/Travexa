@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=IBM+Plex+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,6 +26,7 @@
           <button data-screen="hotel" id="nav-hotel">Hotel</button>
           <button data-screen="restaurant" id="nav-restaurant">Restaurant</button>
           <button data-screen="guide" id="nav-guide">Guide</button>
+          <button data-screen="assistant" id="nav-assistant">Assistant</button>
         </nav>
         <button class="theme-toggle" id="themeToggle" aria-label="Switch to dark mode">
           <span class="theme-icon">☾</span>
@@ -446,6 +449,7 @@
         </button>
         <h2 class="step-question">Popular spots near you</h2>
         <div class="dest-grid" id="localGrid"></div>
+        <div class="other-mount" data-other="local"></div>
       </section>
 
       <!-- ===== BOOK STEP 2: International Destinations ===== -->
@@ -456,6 +460,7 @@
         </button>
         <h2 class="step-question">Popular international destinations</h2>
         <div class="dest-grid" id="intlGrid"></div>
+        <div class="other-mount" data-other="intl"></div>
       </section>
 
       <!-- ===== ITINERARY ===== -->
@@ -543,6 +548,8 @@
           <p class="screen-lede">Matched to your budget, and to how far they sit from the first stop of your day.</p>
         </div>
 
+        <div class="ai-mount" data-ai="hotel"></div>
+
         <form class="place-search" id="hotelSearch">
           <input class="place-input" id="hotelQuery" type="search"
                  placeholder="Search hotels or destination…" autocomplete="off">
@@ -551,6 +558,20 @@
         <p class="place-hint" id="hotelHint"></p>
 
         <div class="place-status" id="hotelStatus" hidden></div>
+
+        <!-- Area map: real places plotted on OpenStreetMap -->
+        <div class="dest-map-card" id="hotelMapCard" hidden>
+          <div class="dest-map-header">
+            <div class="dest-map-title-row">
+              <span class="map-icon" aria-hidden="true">🗺</span>
+              <span class="map-title-text">Area map · Stays around
+                <strong id="hotelMapDestText">your destination</strong></span>
+            </div>
+            <span class="map-coords-tag" id="hotelMapCoordsTag">—</span>
+          </div>
+          <div id="hotelMap" class="dest-interactive-map"></div>
+        </div>
+
         <div class="hotels-grid" id="hotelResults"></div>
 
         <div id="hotelDemo">
@@ -597,6 +618,8 @@
           <p class="screen-lede">Filtered against your dietary needs and allergies before anything reaches your itinerary.</p>
         </div>
 
+        <div class="ai-mount" data-ai="restaurant"></div>
+
         <form class="place-search" id="restaurantSearch">
           <input class="place-input" id="restaurantQuery" type="search"
                  placeholder="Search restaurants or destination…" autocomplete="off">
@@ -605,6 +628,20 @@
         <p class="place-hint" id="restaurantHint"></p>
 
         <div class="place-status" id="restaurantStatus" hidden></div>
+
+        <!-- Area map: real places plotted on OpenStreetMap -->
+        <div class="dest-map-card" id="restaurantMapCard" hidden>
+          <div class="dest-map-header">
+            <div class="dest-map-title-row">
+              <span class="map-icon" aria-hidden="true">🍽</span>
+              <span class="map-title-text">Area map · Dining around
+                <strong id="restaurantMapDestText">your destination</strong></span>
+            </div>
+            <span class="map-coords-tag" id="restaurantMapCoordsTag">—</span>
+          </div>
+          <div id="restaurantMap" class="dest-interactive-map"></div>
+        </div>
+
         <div class="hotels-grid" id="restaurantResults"></div>
 
         <div id="restaurantDemo">
@@ -650,6 +687,17 @@
           <h2 class="section-title">Need a Local Guide?</h2>
           <p class="screen-lede">Find a nearby local guide who can come to you and show you the destination like a local.</p>
         </div>
+
+        <div class="guide-cta-row">
+          <span class="guide-cta-text">Are you a local guide?</span>
+          <button class="gx-btn ghost" type="button" id="becomeGuideBtn">Become a guide</button>
+          <button class="gx-btn ghost" type="button" id="guideSignInBtn">Guide sign in</button>
+        </div>
+
+        <!-- Live booking, if the traveller has one -->
+        <div class="booking-live" id="bookingLive" hidden></div>
+
+        <div class="ai-mount" data-ai="guide"></div>
 
         <div class="gx">
 
@@ -718,6 +766,8 @@
                 <span class="gx-results-count" id="gxCount">Guides nearby</span>
                 <span class="gx-results-sub">Closest first</span>
               </div>
+              <!-- Verified Travexa guides, when any are available -->
+              <div class="gx-real" id="gxReal"></div>
               <div class="gx-list" id="gxList"></div>
               <p class="demo-note">Demo profiles — sample guides for this prototype. No real guide is connected or notified.</p>
             </div>
@@ -787,14 +837,198 @@
         </div>
       </section>
 
-      <!-- ===== TRIP SUMMARY ===== -->
-      <section class="screen" id="tripSummary">
-        <div class="itin-head">
-          <p class="eyebrow">Your trip</p>
-          <h2 class="section-title" id="summaryTitle">Trip to your destination.</h2>
-          <p class="screen-lede">Everything you picked, in one place. Tap any row to change it.</p>
+      <!-- ===== AI ASSISTANT — decide, then keep what you want ===== -->
+      <section class="screen" id="assistant" data-state="empty">
+        <!-- Centred composer while empty; collapses to the top once answered -->
+        <div class="as-stage">
+          <h2 class="as-greeting" id="asGreeting">Where to next?</h2>
+          <p class="as-greeting-sub">Describe the trip you want — real places come back,
+            and you keep the ones you like.</p>
+
+          <div class="ai-mount" data-ai="assistant"></div>
         </div>
 
+        <div class="as-trip" id="asTrip"></div>
+
+        <div class="place-status" id="assistantStatus" hidden></div>
+        <p class="place-hint" id="assistantHint"></p>
+        <div class="hotels-grid" id="assistantResults"></div>
+
+        <div class="flow-actions" id="asActions" hidden>
+          <button class="btn-primary wide" id="asSeePlan">See my plan →</button>
+        </div>
+      </section>
+
+      <!-- ===== GUIDE AUTH — sign in / become a guide ===== -->
+      <section class="screen" id="guideAuth">
+        <button class="back-link" id="guideAuthBack">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Back to guides</span>
+        </button>
+
+        <div class="itin-head">
+          <p class="eyebrow">For guides</p>
+          <h2 class="section-title">Work with Travexa.</h2>
+          <p class="screen-lede">Create a guide account, or sign in to your dashboard.</p>
+        </div>
+
+        <div class="day-tabs" id="guideAuthTabs">
+          <button class="active" data-auth="login">Sign in</button>
+          <button data-auth="signup">Become a guide</button>
+        </div>
+
+        <div class="plan-card" id="guideLoginCard">
+          <div class="field-label">Email</div>
+          <input class="place-input wide" type="email" id="glEmail" autocomplete="username">
+          <div class="field-label">Password</div>
+          <input class="place-input wide" type="password" id="glPassword" autocomplete="current-password">
+          <div class="auth-msg" id="glMsg" hidden></div>
+          <button class="btn-primary" id="glSubmit">Sign in →</button>
+        </div>
+
+        <div class="plan-card" id="guideSignupCard" hidden>
+          <div class="form-grid">
+            <div><div class="field-label">Full name *</div>
+              <input class="place-input wide" type="text" id="gsName"></div>
+            <div><div class="field-label">Email *</div>
+              <input class="place-input wide" type="email" id="gsEmail" autocomplete="username"></div>
+            <div><div class="field-label">Phone</div>
+              <input class="place-input wide" type="tel" id="gsPhone"></div>
+            <div><div class="field-label">Password * (8+ characters)</div>
+              <input class="place-input wide" type="password" id="gsPassword" autocomplete="new-password"></div>
+            <div><div class="field-label">Current city</div>
+              <input class="place-input wide" type="text" id="gsCity" placeholder="Jaipur"></div>
+            <div><div class="field-label">Years of experience</div>
+              <input class="place-input wide" type="number" id="gsYears" min="0" value="0"></div>
+            <div><div class="field-label">Languages spoken</div>
+              <input class="place-input wide" type="text" id="gsLanguages" placeholder="English, Hindi, Tamil"></div>
+            <div><div class="field-label">Specialties</div>
+              <input class="place-input wide" type="text" id="gsSpecialties" placeholder="History, Food, Photography"></div>
+            <div><div class="field-label">Areas you know</div>
+              <input class="place-input wide" type="text" id="gsAreas" placeholder="Jaipur, Amber Fort"></div>
+            <div><div class="field-label">Hourly rate (₹)</div>
+              <input class="place-input wide" type="number" id="gsRate" min="0" value="800"></div>
+          </div>
+          <div class="field-label">Short bio</div>
+          <textarea class="plan-input" id="gsBio" placeholder="What kind of experience do you run?"></textarea>
+          <div class="auth-msg" id="gsMsg" hidden></div>
+          <button class="btn-primary" id="gsSubmit">Create guide account →</button>
+          <p class="demo-note">Your account starts as PENDING VERIFICATION. You upload identity
+            documents after signing up; a person reviews them before you appear to travellers.</p>
+        </div>
+      </section>
+
+      <!-- ===== GUIDE DASHBOARD ===== -->
+      <section class="screen" id="guideDashboard">
+        <div class="itin-head">
+          <p class="eyebrow">Guide dashboard</p>
+          <h2 class="section-title" id="gdName">Your work.</h2>
+        </div>
+
+        <div class="gd-top">
+          <div class="gd-stat">
+            <span class="gd-stat-label">Verification</span>
+            <span class="gd-stat-value" id="gdVerification">—</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat-label">Rating</span>
+            <span class="gd-stat-value" id="gdRating">—</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat-label">Completed trips</span>
+            <span class="gd-stat-value" id="gdTrips">0</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat-label">Released earnings</span>
+            <span class="gd-stat-value" id="gdEarned">₹0</span>
+          </div>
+          <div class="gd-stat">
+            <span class="gd-stat-label">Awaiting payout</span>
+            <span class="gd-stat-value" id="gdPending">₹0</span>
+          </div>
+        </div>
+
+        <div class="gd-row">
+          <span class="field-label" style="margin:0">Availability</span>
+          <div class="day-tabs" id="gdAvailability">
+            <button data-av="available">Available</button>
+            <button data-av="busy">Busy</button>
+            <button data-av="offline">Offline</button>
+          </div>
+        </div>
+
+        <!-- Verification documents -->
+        <div class="plan-card" style="margin-top:24px">
+          <div class="field-label">Verification documents</div>
+          <p class="screen-lede" style="margin-top:6px">
+            Stored privately on the server, never published. Status stays
+            <b>pending</b> until a person reviews them.
+          </p>
+          <div class="gd-uploads">
+            <label class="gd-upload"><span>Government ID *</span>
+              <input type="file" id="docGovId" accept="image/*,application/pdf"></label>
+            <label class="gd-upload"><span>Profile photo</span>
+              <input type="file" id="docPhoto" accept="image/*"></label>
+            <label class="gd-upload"><span>Certification</span>
+              <input type="file" id="docCert" accept="image/*,application/pdf"></label>
+            <label class="gd-upload"><span>Proof of experience</span>
+              <input type="file" id="docExp" accept="image/*,application/pdf"></label>
+          </div>
+          <div class="auth-msg" id="gdDocMsg" hidden></div>
+          <button class="btn-primary" id="gdUpload">Upload documents</button>
+          <div class="gd-doclist" id="gdDocList"></div>
+        </div>
+
+        <div class="itin-head" style="margin-top:40px">
+          <p class="eyebrow">Bookings</p>
+          <h3 class="section-title" style="font-size:24px">Requests and trips.</h3>
+        </div>
+        <div class="gd-bookings" id="gdBookings"></div>
+
+        <div class="flow-actions">
+          <button class="btn-secondary" id="gdSignOut">Sign out</button>
+        </div>
+      </section>
+
+      <!-- ===== TRIP PLAN — ordered day plan built from real selections ===== -->
+      <section class="screen" id="tripSummary">
+        <div class="itin-head">
+          <p class="eyebrow">Your plan</p>
+          <h2 class="section-title" id="summaryTitle">Trip to your destination.</h2>
+          <p class="screen-lede">Your day in order, built from the places you chose.</p>
+        </div>
+
+        <!-- Safety for the place being visited, not the traveller's own position -->
+        <button class="dest-safety" id="destSafety" type="button" hidden
+                aria-haspopup="dialog" aria-controls="safetyModal">
+          <span class="dest-safety-icon" id="destSafetyIcon" aria-hidden="true">◎</span>
+          <span class="dest-safety-body">
+            <span class="dest-safety-label" id="destSafetyLabel">Conditions at your destination</span>
+            <span class="dest-safety-value" id="destSafetyValue">Checking…</span>
+          </span>
+          <span class="dest-safety-cta">Details ›</span>
+        </button>
+
+        <div class="plan-status" id="planStatus" hidden></div>
+
+        <!-- Ordered itinerary -->
+        <div class="plan-route" id="planRoute"></div>
+
+        <!-- Guide slot: booked from inside the plan -->
+        <div class="plan-guide" id="planGuide"></div>
+
+        <p class="plan-links-note">Booking links open the venue's own site, or a
+          pre-filled search — Travexa does not hold inventory and does not confirm
+          reservations.</p>
+
+        <div class="plan-actions-row">
+          <button class="btn-secondary" id="planRebuild">Rebuild plan</button>
+        </div>
+
+        <div class="itin-head" style="margin-top:44px">
+          <p class="eyebrow">Selections</p>
+          <h3 class="section-title" style="font-size:24px">What's in this trip.</h3>
+        </div>
         <div class="summary-list" id="summaryList"></div>
 
         <div class="flow-actions">
@@ -828,6 +1062,43 @@
     </div>
   </div>
 
+  <!-- ===== LIVE SAFETY + WEATHER WIDGET (persistent) ===== -->
+  <aside class="safety-widget" id="safetyWidget" data-state="idle" aria-label="Live area conditions">
+    <button class="safety-pill-btn" id="safetyPillBtn" type="button"
+            aria-haspopup="dialog" aria-controls="safetyModal">
+      <span class="safety-icon" id="safetyIcon" aria-hidden="true">◎</span>
+      <span class="safety-pill-text">
+        <span class="safety-pill-main" id="safetyPillText">Check area conditions</span>
+        <span class="safety-pill-sub" id="safetyPillSub">Uses your live location</span>
+      </span>
+    </button>
+  </aside>
+
+  <!-- Safety score breakdown -->
+  <div class="safety-modal-overlay" id="safetyModal" hidden>
+    <div class="safety-modal" role="dialog" aria-modal="true" aria-labelledby="safetyModalTitle">
+      <button class="gx-modal-close" id="safetyModalClose" type="button" aria-label="Close">✕</button>
+      <p class="eyebrow">Area conditions</p>
+      <h3 class="gx-modal-title" id="safetyModalTitle">Safety score</h3>
+      <p class="safety-modal-place" id="safetyModalPlace">—</p>
+
+      <div class="safety-gauge">
+        <span class="safety-gauge-num" id="safetyGaugeNum">—</span>
+        <span class="safety-gauge-band" id="safetyGaugeBand">—</span>
+        <div class="safety-gauge-bar"><i id="safetyGaugeFill"></i></div>
+      </div>
+
+      <div class="safety-factors" id="safetyFactors"></div>
+
+      <p class="demo-note" id="safetyModalNote"></p>
+
+      <div class="gx-modal-actions two">
+        <button type="button" class="gx-btn ghost" id="safetyRefresh">Refresh</button>
+        <button type="button" class="gx-btn solid" id="safetyClose2">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Guide contact / request modal — body is rendered by app.js -->
   <div class="gx-modal-overlay" id="gxModal" hidden>
     <div class="gx-modal" role="dialog" aria-modal="true" aria-labelledby="gxModalTitle">
@@ -842,6 +1113,9 @@
     <span id="toastText">Rain expected at 2pm — swapped Belém Tower walk for a tile workshop</span>
   </div>
 
+  <!-- Leaflet, loaded before app.js so the area map can initialise -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="app.js"></script>
 </body>
 </html>
